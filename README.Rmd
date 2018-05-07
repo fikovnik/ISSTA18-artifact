@@ -1,0 +1,18 @@
+---
+title: "ISSTA Artifact"
+authors: "Filip Krikava & Jan Vitek"
+output: html_document
+---
+
+## Artifact description
+
+This is the artifact for the paper __Tests from Traces: Automated Unit Test
+Generation for R__ published at ISSTA 2018.
+
+## How to use the artifact
+
+The artifact is provided as a docker image `prlprg/issta18-genthat`.
+The image contains R 3.4 with a web version of Rstudio.
+To run the artifact, please use `./run.sh`.
+
+The image is hosted on the dockerhub.
