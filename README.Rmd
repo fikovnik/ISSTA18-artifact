@@ -1,8 +1,19 @@
 ---
 title: "ISSTA Artifact"
 authors: "Filip Krikava & Jan Vitek"
-output: html_document
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    highlight: tango
 ---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(comment=NA)
+```
 
 ## Artifact description
 
@@ -11,8 +22,44 @@ Generation for R__ published at ISSTA 2018.
 
 ## How to use the artifact
 
+### Prerequisites
+
+- git
+- [docker](https://www.docker.com/community-edition)
+
+### Running the artifact
+
+Clone the repository [fikovnik/ISSTA18-artifact](https://github.com/fikovnik/ISSTA18-artifact):
+
+```sh
+git clone https://github.com/fikovnik/ISSTA18-artifact
+```
+
 The artifact is provided as a docker image `prlprg/issta18-genthat`.
 The image contains R 3.4 with a web version of Rstudio.
-To run the artifact, please use `./run.sh`.
+To run the artifact, please use `run.sh`:
 
-The image is hosted on the dockerhub.
+```{sh echo=FALSE}
+cat run.sh
+```
+
+Once it is run, please go to [http://localhost:8787](http://localhost:8787).
+The username is `rstudio` and the password is `rstudio`.
+
+In the Rstudio application, please open the 
+
+- `overview.Rmd`, and
+- `cran-experiment.Rmd`
+
+files and follow the instructions there.
+The first one goes through the basic use of genthat (as described in Section 3 in the paper) while the other one runs the experiment (as described in Section 4) with the exception that we use only ~10% of the packages used in the original paper so reduce the time and resources need.
+
+
+## Build image locally
+
+The image is hosted on the [Docker HUB](https://hub.docker.com/r/fikovnik/issta18-artifact/) and shall be available for download.
+To make a local build run `build.sh`:
+
+```{sh echo=FALSE}
+cat build.sh
+```
