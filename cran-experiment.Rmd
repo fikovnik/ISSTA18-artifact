@@ -1,0 +1,196 @@
+---
+title: "Genthat CRAN Experiment"
+author: "Filip Krikava & Jan Vitek"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    toc_float: true
+    highlight: tango
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+opts_chunk$set(comment=NA)
+
+# genthat options
+options(genthat.source_paths="/CRAN")
+options(genthat.debug=FALSE)
+options(genthat.max_trace_size=getOption("genthat.max_trace_size", 512*1024))
+
+output_dir <- "experiment"
+```
+
+```{r aux functions, include=FALSE}
+load_coverage <- function(path) {
+  coverage <- readRDS(path)
+  
+  if (is.data.frame(coverage)) {
+    # only keep coverage of R file - genthat does not support C/C++ coverage
+    coverage_df <- filter(coverage, grepl("(.R|.r)$", filename))
+    # compute the percentage
+    tests_coverage <- (sum(coverage_df$value > 0) / length(coverage_df$value)) * 100
+    data_frame(tests_coverage, tests_coverage_time=as.numeric(attr(coverage, "time"), unit="secs"))
+  } else {
+    data_frame(tests_coverage=NA, tests_coverage_time=NA)
+  }
+}
+
+load_genthat_stats <- function(path) {
+  tests <- readRDS(path)
+  stats <- attr(tests, "stats")
+  
+  if (!is.null(stats)) {
+    data_frame(
+      all=stats[1], 
+      generated=stats[2], 
+      ran=stats[3], 
+      kept=stats[4], 
+      coverage=stats[5], 
+      genthat_tests_time=stats[6], 
+      trace_time=as.numeric(attr(tests, "time"), unit="secs")
+    )
+  } else {
+    data_frame(all=NA, generated=NA, ran=NA, kept=NA, coverage=NA, genthat_tests_time=NA, trace_time=NA)
+  }
+}
+
+fmt <- function(x) format(round(x, 2), big.mark=",")
+
+my_avg <- function(xs) {
+  paste0(
+    fmt(mean(xs)), 
+    " (s=", 
+    fmt(sd(xs)), 
+    ", m=", 
+    fmt(median(xs)), 
+    ")"
+  )
+}
+```
+
+This notebook reproduces a similar experiment as the one that was presented in Section 4.
+The difference is that we only select 10% or the original packages (random 10% from the original set in which tracing took less than 60 seconds---157 packages from 656 packages).
+The reason is that tracing, as indicated in the paper, takes a long time to run.
+Running the original set took 1d 18h on two virtual nodes with 60GB RAM and 16 CPU at 2.2GHz.
+On an average laptop or desktop, it might take even more.
+
+## Rerunning the experiment
+
+The repository is already contains the experiment ran (in `experiment` directory). 
+To redo the experiment, do the following steps. The `pc` indicates commands to be run at a local machine that started the docker container (_i.e._ ran the `./run.sh`), the `docker` indicates what shall be run in the container itself.
+On i7 laptop with 16GB RAM this takes about 30 minutes.
+
+1. Connect to the container
+
+```sh
+pc$ docker exec -ti issta18-genthat bash
+```
+
+2. Become `rstudio` user and rerun the experiment
+
+```sh
+docker$ su - rstudio
+docker$ exec bash
+docker$ rm -fr experiment
+docker$ ./run-experiment.sh
+```
+
+This will run `extract-test.R` script that basically does what has been shown in the _overview_ notebook.
+It runs it in parallel for each package found in the `packages.txt` file.
+The result are two RDS files: 
+
+- a `experiment/<package_name>/coverage.RDS` - contains test code coverage from covr
+- a `experiment/<package_name>/tests.RDS` - contains the result of running `gen_from_package`
+
+plus all the regular genthat extracted tests,
+
+## Loading the results
+
+```{r}
+packages_df <- data_frame(
+  package_path=list.dirs(output_dir, full.names=TRUE, recursive=FALSE),
+  package=basename(package_path),
+  coverage_file=file.path(package_path, "coverage.RDS"),
+  tests_file=file.path(package_path, "tests.RDS")
+) %>% 
+  select(-package_path) %>%
+  filter(file.exists(coverage_file), file.exists(tests_file))
+```
+
+```{r test coverage}
+packages_tests_df <- 
+  rowwise(packages_df) %>%
+  do(load_coverage(.$coverage_file))
+```
+
+```{r genthat test extraction}
+packages_gt_df <- 
+  rowwise(packages_df) %>%
+  do(load_genthat_stats(.$tests_file))
+```
+
+```{r}
+packages_all_df <-
+  select(packages_df, package) %>%
+  bind_cols(packages_tests_df) %>%
+  bind_cols(packages_gt_df)
+```
+
+## Table 1
+
+```{r}
+ratio <- sum(packages_all_df$ran)/sum(packages_all_df$all)
+table1 <- tribble(
+  ~Name,                      ~Overall,                            ~`Average per package`,
+  "Traced unique calls",      fmt(sum(packages_all_df$all)),       my_avg(packages_all_df$all),
+  "Generated tests",          fmt(sum(packages_all_df$generated)), my_avg(packages_all_df$generated),
+  "Valid and Correct tests",  fmt(sum(packages_all_df$ran)),       my_avg(packages_all_df$ran),
+  "Non-redundant tests",      fmt(sum(packages_all_df$kept)),      my_avg(packages_all_df$kept),
+  "Ratio of reproduced test", fmt(ratio),                          my_avg(packages_all_df$ran/packages_all_df$all)
+)
+
+table1
+```
+
+## Figure 4
+
+```{r}
+select(packages_all_df, package, coverage, tests_coverage) %>%
+  mutate(Default=tests_coverage/100, Genthat=coverage/100) %>%
+  gather(key="key", value="value", Default, Genthat) %>%
+  ggplot(aes(x=value, fill=factor(key, levels=c("Genthat", "Default")))) + 
+    geom_histogram(alpha=.4, bins=100, colour="grey") + 
+    scale_x_continuous(labels=scales::percent_format()) +
+    theme_minimal() +
+    theme(legend.position=c(.9,.75)) +
+    labs(x="Code coverage", y="Number of packages", fill="Tests")
+    
+```
+
+## Table 2
+
+```{r}
+table2 <- tribble(
+  ~Name,                  ~`Average per package`,
+  "Tracing",              my_avg(packages_all_df$trace_time),
+  "Testing with genthat", my_avg(packages_all_df$genthat_tests_time),
+  "Testing",              my_avg(packages_all_df$tests_coverage_time)
+)
+
+table2
+```
+
+## Summary
+
+Together, we ran  ```r length(readLines("packages.txt"))``` packages out of which succeeded ```r nrow(packages_all_df)``` packages.
+The major results in the paper are Table 1 and Figure 4 which we showed above.
+The Figure 5 with reverse dependencies is skipped because we have already shown in the _overview_ how it is done on a single package `Rvmmin` and above we have shown the strategy running genthat on multiple packages.
+

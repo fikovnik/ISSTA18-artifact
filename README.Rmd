@@ -51,9 +51,10 @@ In the Rstudio application, please open the
 - `overview.Rmd`, and
 - `cran-experiment.Rmd`
 
-files and follow the instructions there.
+files.
 The first one goes through the basic use of genthat (as described in Section 3 in the paper) while the other one runs the experiment (as described in Section 4) with the exception that we use only ~10% of the packages used in the original paper so reduce the time and resources need.
 
+To rerun the _overview_ as well as the _CRAN experiment_, you can either run chunk by chunk or just knit the whole document by pressing Ctrl+Alt+K (Command+Option+K) on OSX. Knitted documents in HTML are already provided in the repository.
 
 ## Build image locally
 

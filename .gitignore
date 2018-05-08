@@ -1,0 +1,6 @@
+.bash_history
+.rstudio
+experiment/**/failed-trace-*.RDS
+experiment.log
+tmp
+
