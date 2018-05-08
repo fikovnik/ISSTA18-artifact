@@ -282,7 +282,8 @@ docker run \
 <li><code>overview.Rmd</code>, and</li>
 <li><code>cran-experiment.Rmd</code></li>
 </ul>
-<p>files and follow the instructions there. The first one goes through the basic use of genthat (as described in Section 3 in the paper) while the other one runs the experiment (as described in Section 4) with the exception that we use only ~10% of the packages used in the original paper so reduce the time and resources need.</p>
+<p>files. The first one goes through the basic use of genthat (as described in Section 3 in the paper) while the other one runs the experiment (as described in Section 4) with the exception that we use only ~10% of the packages used in the original paper so reduce the time and resources need.</p>
+<p>To rerun the <em>overview</em> as well as the <em>CRAN experiment</em>, you can either run chunk by chunk or just knit the whole document by pressing Ctrl+Alt+K (Command+Option+K) on OSX. Knitted documents in HTML are already provided in the repository.</p>
 </div>
 </div>
 <div id="build-image-locally" class="section level2">
@@ -290,7 +291,11 @@ docker run \
 <p>The image is hosted on the <a href="https://hub.docker.com/r/fikovnik/issta18-artifact/">Docker HUB</a> and shall be available for download. To make a local build run <code>build.sh</code>:</p>
 <pre><code>#!/bin/sh
 
-docker build --rm -t prlprg/issta18-genthat .</code></pre>
+docker build \
+       --rm \
+       --build-arg REPO=https://mirrors.nic.cz/R \
+       -t prlprg/issta18-genthat \
+       .</code></pre>
 </div>
 
 
