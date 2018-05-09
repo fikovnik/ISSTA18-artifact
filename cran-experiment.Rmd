@@ -140,24 +140,24 @@ coverage_sloc <- sum(sloc$code) * (mean(packages_all_df$coverage, na.rm=T)/100)
 accuracy <- sum(packages_all_df$ran)/sum(packages_all_df$all)
 ```
 
-Together, this experiment ran ```r length(readLines("packages.txt"))``` packages (the number of lines in `packages.txt`) out of which ```r nrow(packages_all_df)``` packages completed.
-This is ```r fmt(nrow(packages_all_df)/PAPER_NPACKAGES*100)```% of the packages reported in the the paper.
-These packages comprises of ```r fmt(sum(sloc$code))``` lines of code (excluding whitespace and comments), which is ```r fmt(sum(sloc$code)/PAPER_SLOC*100)```% of the original experiment.
+Together, this experiment ran `r length(readLines("packages.txt"))` packages (the number of lines in `packages.txt`) out of which `r nrow(packages_all_df)` packages completed.
+This is `r fmt(nrow(packages_all_df)/PAPER_NPACKAGES*100)`% of the packages reported in the the paper.
+These packages comprises of `r fmt(sum(sloc$code))` lines of code (excluding whitespace and comments), which is `r fmt(sum(sloc$code)/PAPER_SLOC*100)`% of the original experiment.
 We selected the packages which had the original tracing time less than 2 minutes to keep the artifcat time manageable.
 
 ### Summary
 
-The average test code coverage is ```r my_avg(packages_all_df$tests_coverage)```.
-With genthat this is increased to ```r my_avg(packages_all_df$coverage)```.
-In terms of source lines of code (as reported in both the paper abstract and paper introduction), **genthat improved code coverage from the original rather low value of ```r fmt(test_coverage_sloc)``` lines to ```r fmt(coverage_sloc)``` lines**.
-This is an increase of ```r fmt(coverage_sloc/test_coverage_sloc*100)```%.
-In the paper we reported ```r fmt(PAPER_COVERAGE_SLOC/PAPER_TEST_COVERAGE_SLOC*100)```%.
+The average test code coverage is `r my_avg(packages_all_df$tests_coverage/100)`.
+With genthat this is increased to `r my_avg(packages_all_df$coverage/100)`.
+In terms of source lines of code (as reported in both the paper abstract and paper introduction), **genthat improved code coverage from the original rather low value of `r fmt(test_coverage_sloc)` lines to `r fmt(coverage_sloc)` lines**.
+This is an increase of `r fmt(coverage_sloc/test_coverage_sloc*100)`%.
+In the paper we reported `r fmt(PAPER_COVERAGE_SLOC/PAPER_TEST_COVERAGE_SLOC*100)`%.
 
 The major results in the paper are in Table 1, Table 2 and Figure 4 which are shown bellow.
 
 Table 3 describes what are the cases of lost accurracy.
 A part of the table requires manual inspection of the failures (how to get errors has been explained in the _overview_ notebook).
-Therefore, we reports only the overall accuracy ```r fmt(accuracy*100)```% which should be similar to what we reported in the paper ```r fmt(PAPER_ACCURACY*100)```%.
+Therefore, we reports only the overall accuracy `r fmt(accuracy*100)`% which should be similar to what we reported in the paper `r fmt(PAPER_ACCURACY*100)`%.
 This of course depends on the package selection, yet in a resonable number of packages the numbers shall be close.
 
 Finally, Figure 5 with reverse dependencies is skipped because:

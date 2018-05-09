@@ -250,13 +250,10 @@ div.tocify {
 </div>
 
 
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">PAPER_NPACKAGES &lt;-<span class="st"> </span><span class="dv">1547</span>
-PAPER_SLOC &lt;-<span class="st"> </span><span class="dv">1700000</span>
-PAPER_TEST_COVERAGE_SLOC &lt;-<span class="st"> </span><span class="dv">267113</span>
-PAPER_COVERAGE_SLOC &lt;-<span class="st"> </span><span class="dv">704450</span>
-PAPER_ACCURACY &lt;-<span class="st"> </span><span class="fl">0.8</span></code></pre></div>
+<p>This notebook processes the results from the CRAN experiment and reproduces the data from Section 4.</p>
 <div id="loading-the-results" class="section level2">
 <h2>Loading the results</h2>
+<p>First we load the data from packages that ran.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">packages_df &lt;-<span class="st"> </span><span class="kw">data_frame</span>(
   <span class="dt">package_path=</span><span class="kw">list.dirs</span>(output_dir, <span class="dt">full.names=</span><span class="ot">TRUE</span>, <span class="dt">recursive=</span><span class="ot">FALSE</span>),
   <span class="dt">package=</span><span class="kw">basename</span>(package_path),
@@ -275,11 +272,9 @@ PAPER_ACCURACY &lt;-<span class="st"> </span><span class="fl">0.8</span></code><
 <span class="st">  </span><span class="kw">select</span>(packages_df, package) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">bind_cols</span>(packages_tests_df) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">bind_cols</span>(packages_gt_df)</code></pre></div>
-<div id="lines-of-code" class="section level3">
-<h3>Lines of code</h3>
-<p>We ran the <a href="http://cloc.sourceforge.net/">cloc</a> tool in the docker image to compute the size of R source code in all the packages in <code>/CRAN</code> directory. Each package has <code>sloc.csv</code> file in its root which a result of running:</p>
+<p>Next, we load the code size. We ran the <a href="http://cloc.sourceforge.net/">cloc</a> tool in the docker image to compute the size of R source code in all the packages in <code>/CRAN</code> directory. Each package has <code>sloc.csv</code> file in its root which a result of running:</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">cloc</span> --quiet --csv %p/R <span class="kw">|</span> <span class="fu">sed</span> <span class="st">'s/,\&quot;.*$//'</span> <span class="kw">|</span> <span class="fu">tail</span> -n +2 <span class="op">&gt;</span> %p/sloc.csv</code></pre></div>
-<p>where <code>%s</code> is the name of the project. Since this is a static information that does nto depend in anyway on our tool, all the files have been already generated during the image build. Now we compute the code size from the finished packages:</p>
+<p>where <code>%s</code> is the name of the project. Since this is a static information that does not depend in anyway on our tool, all the files have been already generated during the image build.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sloc &lt;-<span class="st"> </span><span class="kw">map_dfr</span>(packages_all_df<span class="op">$</span>package, <span class="cf">function</span>(x) {
   <span class="co"># read the output of cloc in CSV, skip all but code column</span>
   s &lt;-<span class="st"> </span><span class="kw">read_csv</span>(<span class="kw">file.path</span>(<span class="st">&quot;/CRAN&quot;</span>, x, <span class="st">&quot;sloc.csv&quot;</span>), <span class="dt">col_types=</span><span class="kw">cols</span>(<span class="st">&quot;code&quot;</span>=<span class="st">&quot;i&quot;</span>))
@@ -287,19 +282,21 @@ PAPER_ACCURACY &lt;-<span class="st"> </span><span class="fl">0.8</span></code><
   <span class="kw">data_frame</span>(<span class="dt">package=</span>x, <span class="dt">code=</span><span class="kw">sum</span>(s<span class="op">$</span>code))
 })</code></pre></div>
 </div>
-</div>
-<div id="summary" class="section level2">
-<h2>Summary</h2>
-<p>Together, this experiment ran <code>858</code> packages (the number of lines in <code>packages.txt</code>) out of which <code>844</code> packages completed. This is <code>54.56</code>% of the packages reported in the the paper. These packages comprises of <code>406,307</code> lines of code (excluding whitespace and comments), which is <code>23.9</code>% of the original experiment. We selected the packages which had the original tracing time less than 2 minutes to keep the artifcat time manageable.</p>
-<p>The average test code coverage is <code>18.97 (s=33.5, m=0)</code>. With genthat this is increased to <code>56.73 (s=31.32, m=63.05)</code>. In terms of source lines of code (as reported in both the paper abstract and paper introduction), <strong>genthat improved code coverage from the original rather low value of <code>77,073.08</code> lines to <code>230,515.2</code> lines</strong>. This is an increase of <code>299.09</code>%. In the paper we reported <code>263.73</code>%.</p>
+<div id="results" class="section level2">
+<h2>Results</h2>
+<p>Together, this experiment ran 858 packages (the number of lines in <code>packages.txt</code>) out of which 844 packages completed. This is 54.56% of the packages reported in the the paper. These packages comprises of 406,307 lines of code (excluding white space and comments), which is 23.9% of the original experiment. We selected the packages which had the original tracing time less than 2 minutes to keep the artifact time manageable.</p>
+<div id="summary" class="section level3">
+<h3>Summary</h3>
+<p>The average test code coverage is 0.19 (s=0.33, m=0). With genthat this is increased to 0.57 (s=0.31, m=0.63). In terms of source lines of code (as reported in both the paper abstract and paper introduction), <strong>genthat improved code coverage from the original rather low value of 77,073.08 lines to 230,515.2 lines</strong>. This is an increase of 299.09%. In the paper we reported 263.73%.</p>
 <p>The major results in the paper are in Table 1, Table 2 and Figure 4 which are shown bellow.</p>
-<p>Table 3 describes what are the cases of lost accurracy. A part of the table requires manual inspection of the failures (how to get errors has been explained in the <em>overview</em> notebook). Therefore, we reports only the overall accuracy <code>76.88</code>% which should be similar to what we reported in the paper <code>80</code>%. This of course depends on the package selection, yet in a resonable number of packages the numbers shall be close.</p>
+<p>Table 3 describes what are the cases of lost accuracy. A part of the table requires manual inspection of the failures (how to get errors has been explained in the <em>overview</em> notebook). Therefore, we reports only the overall accuracy 76.88% which should be similar to what we reported in the paper 80%. This of course depends on the package selection, yet in a reasonable number of packages the numbers shall be close.</p>
 <p>Finally, Figure 5 with reverse dependencies is skipped because:</p>
 <ol style="list-style-type: decimal">
 <li>rerunning reverse dependencies for these packages will be highly time consuming,</li>
 <li>we have already shown in the <em>overview</em> how it is done on a single package <code>Rvmmin</code>,</li>
 <li>the above experiment shows the strategy of running genthat in a batch.</li>
 </ol>
+</div>
 <div id="table-1" class="section level3">
 <h3>Table 1</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">table1 &lt;-<span class="st"> </span><span class="kw">tribble</span>(
