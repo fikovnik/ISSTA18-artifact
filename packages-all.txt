@@ -752,7 +752,6 @@ DySeq
 emdist
 ENmisc
 envDocument
-exifr
 extWeibQuant
 FacPad
 fauxpas

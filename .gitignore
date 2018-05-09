@@ -1,6 +1,8 @@
 .bash_history
 .rstudio
-experiment/**/failed-trace-*.RDS
+experiment/**/*
+!experiment/**/coverage.RDS
+!experiment/**/tests.RDS
 experiment.log
 tmp
 
