@@ -16,8 +16,23 @@ output:
 
 ## Artifact description
 
-This is the artifact for the paper __Tests from Traces: Automated Unit Test
-Generation for R__ published at ISSTA 2018.
+This is the artifact for the paper __Tests from Traces: Automated Unit Test Generation for R__ published at ISSTA 2018.
+The aim is to:
+
+1. show how the Genthat tool introduced in the paper works and can be used for extracting code from R packages, and
+2. reproduce the experiment used to evaluate it.
+
+Concretely, we rerun the all the code snippets shown in Section 3 of the paper and the evaluation from Section 4.
+
+The artifact is composed of two parts:
+
+- Genthat Overview
+- CRAN Experiment
+
+The first part corresponds to the Section 3 of the paper where we introduce the tool.
+The second part reproduces the experiment that we used to evaluate the tool in Section 4 and reproduce Table 1,2 and Figure 4.
+
+Both parts require the docker image to be run.
 
 ## Prerequisites
 
@@ -27,34 +42,21 @@ Generation for R__ published at ISSTA 2018.
 
 ## Running the artifact
 
-Clone the repository [fikovnik/ISSTA18-artifact](https://github.com/fikovnik/ISSTA18-artifact):
-
+1. Clone the repository [fikovnik/ISSTA18-artifact](https://github.com/fikovnik/ISSTA18-artifact):
 ```sh
 git clone https://github.com/fikovnik/ISSTA18-artifact
 ```
-
 The artifact is provided as a docker image `prlprg/issta18-genthat`.
 The image contains R 3.4 with a web version of Rstudio and a set of sample packages.
-To run the docker image, please run:
 
+2. Run the docker image:
 ```sh
 ./run.sh
 ```
-
 from the cloned repository.
-
 This shall download the already prebuilt docker image from [docker hub](https://hub.docker.com/r/fikovnik/issta18-artifact/).
 If you prefer to build your own, please follow the instructions at the end of this document.
 If you ran the docker image manually, please make sure its name is `issta18-genthat`.
-
-The artifact is composed of two parts:
-
-- Genthat Overview
-- CRAN Experiment
-
-The first part corresponds to the Section 3 of the paper where we introduce the tool.
-The second part reproduces the experiment that we used to evaluate the tool in Section 4.
-Both require the docker image to be run.
 
 ### Genthat Overview
 
@@ -64,10 +66,11 @@ There are two ways to run it:
 1. Interactively via Rstudio that shall be available on [http://localhost:8787](http://localhost:8787).
    The username is `rstudio` and the password is `rstudio`.
    In the Rstudio application, please open the `overview.Rmd`.
-   Now you can either run the code _chunk-by-chunk_ or just knit the whole document by pressing Ctrl+Alt+K (Command+Shift+K on OSX). 
-   Knitted document in HTML is already provided in the repository---[`overview.html`](http://localhost:8787/files/overview.html).
+   A [Rmd](https://rmarkdown.rstudio.com/) or RMarkdown file is simply a document in Markdown format that embeds snippets of R code that can be ran (_knitted_ - terminology used in RMarkdown) to produce an output with all the code evaluated.
+   This can be done either running by running the snippets _chunk-by-chunk_ (using the green play button next to each snippet) or by running the whole document by pressing Ctrl+Alt+K (Command+Shift+K on OSX). 
+   Resulting HTML outputs are already provided in the repository---[`overview.html`](http://localhost:8787/files/overview.html).
    
-2. Simply knit the whole document by running from the cloned repository:
+2. Simply evaluate the whole document by running from the cloned repository:
 ```sh
 docker exec -u rstudio -w /home/rstudio issta18-genthat Rscript -e 'rmarkdown::render("overview.Rmd")'
 ```
@@ -76,7 +79,7 @@ and then open the [`overview.html`](http://localhost:8787/files/overview.html).
 ### CRAN experiment (Section 4)
 
 The Section 4 presents an experiment that runs genthat on 1547 [CRAN](https://cran.r-project.org/) packages.
-In this artifact, we present the same one, with the difference that only 858 packages are selected.
+In this artifact, we present the same one, with the difference that only 857 packages are selected.
 The reason is that tracing, as indicated in the paper, takes a long time to run.
 These packages represent all the original ones for which tracing took less than 2 minutes.
 Running the original package set took **1d 18h** on two virtual nodes with 60GB RAM and 16 CPU at 2.2GHz.
@@ -116,14 +119,19 @@ To redo the experiment:
 
 1. Make sure the docker image is running
 
-2. Select the size of the experiment
+2. Remove the existing results
+```sh
+rm -fr experiment
+```
+
+3. Select the size of the experiment
 For example, to run a smaller set
 ```sh
 rm packages.txt
-ls -s packages-400.txt packages.txt
+ln -s packages-400.txt packages.txt
 ```
 
-3. Run
+4. Run
 ```sh
 ./run-experiment.sh
 ```

@@ -248,7 +248,19 @@ div.tocify {
 
 <div id="artifact-description" class="section level2">
 <h2>Artifact description</h2>
-<p>This is the artifact for the paper <strong>Tests from Traces: Automated Unit Test Generation for R</strong> published at ISSTA 2018.</p>
+<p>This is the artifact for the paper <strong>Tests from Traces: Automated Unit Test Generation for R</strong> published at ISSTA 2018. The aim is to:</p>
+<ol style="list-style-type: decimal">
+<li>show how the Genthat tool introduced in the paper works and can be used for extracting code from R packages, and</li>
+<li>reproduce the experiment used to evaluate it.</li>
+</ol>
+<p>Concretely, we rerun the all the code snippets shown in Section 3 of the paper and the evaluation from Section 4.</p>
+<p>The artifact is composed of two parts:</p>
+<ul>
+<li>Genthat Overview</li>
+<li>CRAN Experiment</li>
+</ul>
+<p>The first part corresponds to the Section 3 of the paper where we introduce the tool. The second part reproduces the experiment that we used to evaluate the tool in Section 4 and reproduce Table 1,2 and Figure 4.</p>
+<p>Both parts require the docker image to be run.</p>
 </div>
 <div id="prerequisites" class="section level2">
 <h2>Prerequisites</h2>
@@ -260,31 +272,27 @@ div.tocify {
 </div>
 <div id="running-the-artifact" class="section level2">
 <h2>Running the artifact</h2>
-<p>Clone the repository <a href="https://github.com/fikovnik/ISSTA18-artifact">fikovnik/ISSTA18-artifact</a>:</p>
+<ol style="list-style-type: decimal">
+<li><p>Clone the repository <a href="https://github.com/fikovnik/ISSTA18-artifact">fikovnik/ISSTA18-artifact</a>:</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="fu">git</span> clone https://github.com/fikovnik/ISSTA18-artifact</code></pre></div>
-<p>The artifact is provided as a docker image <code>prlprg/issta18-genthat</code>. The image contains R 3.4 with a web version of Rstudio and a set of sample packages. To run the docker image, please run:</p>
+<p>The artifact is provided as a docker image <code>prlprg/issta18-genthat</code>. The image contains R 3.4 with a web version of Rstudio and a set of sample packages.</p></li>
+<li><p>Run the docker image:</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">./run.sh</span></code></pre></div>
-<p>from the cloned repository.</p>
-<p>This shall download the already prebuilt docker image from <a href="https://hub.docker.com/r/fikovnik/issta18-artifact/">docker hub</a>. If you prefer to build your own, please follow the instructions at the end of this document. If you ran the docker image manually, please make sure its name is <code>issta18-genthat</code>.</p>
-<p>The artifact is composed of two parts:</p>
-<ul>
-<li>Genthat Overview</li>
-<li>CRAN Experiment</li>
-</ul>
-<p>The first part corresponds to the Section 3 of the paper where we introduce the tool. The second part reproduces the experiment that we used to evaluate the tool in Section 4. Both require the docker image to be run.</p>
+<p>from the cloned repository. This shall download the already prebuilt docker image from <a href="https://hub.docker.com/r/fikovnik/issta18-artifact/">docker hub</a>. If you prefer to build your own, please follow the instructions at the end of this document. If you ran the docker image manually, please make sure its name is <code>issta18-genthat</code>.</p></li>
+</ol>
 <div id="genthat-overview" class="section level3">
 <h3>Genthat Overview</h3>
 <p>This part essentially explains how genthat works and reproduces all the examples that are in the paper. There are two ways to run it:</p>
 <ol style="list-style-type: decimal">
-<li><p>Interactively via Rstudio that shall be available on <a href="http://localhost:8787" class="uri">http://localhost:8787</a>. The username is <code>rstudio</code> and the password is <code>rstudio</code>. In the Rstudio application, please open the <code>overview.Rmd</code>. Now you can either run the code <em>chunk-by-chunk</em> or just knit the whole document by pressing Ctrl+Alt+K (Command+Shift+K on OSX). Knitted document in HTML is already provided in the repository—<a href="http://localhost:8787/files/overview.html"><code>overview.html</code></a>.</p></li>
-<li><p>Simply knit the whole document by running from the cloned repository:</p>
+<li><p>Interactively via Rstudio that shall be available on <a href="http://localhost:8787" class="uri">http://localhost:8787</a>. The username is <code>rstudio</code> and the password is <code>rstudio</code>. In the Rstudio application, please open the <code>overview.Rmd</code>. A <a href="https://rmarkdown.rstudio.com/">Rmd</a> or RMarkdown file is simply a document in Markdown format that embeds snippets of R code that can be ran (<em>knitted</em> - terminology used in RMarkdown) to produce an output with all the code evaluated. This can be done either running by running the snippets <em>chunk-by-chunk</em> (using the green play button next to each snippet) or by running the whole document by pressing Ctrl+Alt+K (Command+Shift+K on OSX). Resulting HTML outputs are already provided in the repository—<a href="http://localhost:8787/files/overview.html"><code>overview.html</code></a>.</p></li>
+<li><p>Simply evaluate the whole document by running from the cloned repository:</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">docker</span> exec -u rstudio -w /home/rstudio issta18-genthat Rscript -e <span class="st">'rmarkdown::render(&quot;overview.Rmd&quot;)'</span></code></pre></div>
 <p>and then open the <a href="http://localhost:8787/files/overview.html"><code>overview.html</code></a>.</p></li>
 </ol>
 </div>
 <div id="cran-experiment-section-4" class="section level3">
 <h3>CRAN experiment (Section 4)</h3>
-<p>The Section 4 presents an experiment that runs genthat on 1547 <a href="https://cran.r-project.org/">CRAN</a> packages. In this artifact, we present the same one, with the difference that only 858 packages are selected. The reason is that tracing, as indicated in the paper, takes a long time to run. These packages represent all the original ones for which tracing took less than 2 minutes. Running the original package set took <strong>1d 18h</strong> on two virtual nodes with 60GB RAM and 16 CPU at 2.2GHz. On an average laptop or desktop, it might take much more.</p>
+<p>The Section 4 presents an experiment that runs genthat on 1547 <a href="https://cran.r-project.org/">CRAN</a> packages. In this artifact, we present the same one, with the difference that only 857 packages are selected. The reason is that tracing, as indicated in the paper, takes a long time to run. These packages represent all the original ones for which tracing took less than 2 minutes. Running the original package set took <strong>1d 18h</strong> on two virtual nodes with 60GB RAM and 16 CPU at 2.2GHz. On an average laptop or desktop, it might take much more.</p>
 <p>This experiment is composed in a way that gives some flexibility as how much time one wants to devote to the reproduction. We have created the following package files (package name per line) with different sizes:</p>
 <ul>
 <li><code>packages-100.txt</code> ~ 30min</li>
@@ -302,9 +310,11 @@ div.tocify {
 <p>The repository already contains the experiment ran (in <code>experiment</code> directory). To redo the experiment:</p>
 <ol style="list-style-type: decimal">
 <li><p>Make sure the docker image is running</p></li>
+<li><p>Remove the existing results</p>
+<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="fu">rm</span> -fr experiment</code></pre></div></li>
 <li><p>Select the size of the experiment For example, to run a smaller set</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="fu">rm</span> packages.txt
-<span class="fu">ls</span> -s packages-400.txt packages.txt</code></pre></div></li>
+<span class="fu">ln</span> -s packages-400.txt packages.txt</code></pre></div></li>
 <li><p>Run</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">./run-experiment.sh</span></code></pre></div>
 This runs the <code>./extract-tests.R</code> it in <a href="https://www.gnu.org/software/parallel/">parallel</a> for each package found in the <code>packages.txt</code> file. The result are two RDS files:<br />
