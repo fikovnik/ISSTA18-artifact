@@ -181,6 +181,10 @@ table1 <- tribble(
 table1
 ```
 
+Here we should see a similar accuracy results.
+The number of unique traces shall help to understand the the size of the packages.
+Since they are rather small (tracing time is under 2 minutes), there are not many calls from which to extract tests.
+
 ### Figure 4
 
 ```{r}
@@ -195,6 +199,10 @@ select(packages_all_df, package, coverage, tests_coverage) %>%
     labs(x="Code coverage", y="Number of packages", fill="Tests")
     
 ```
+
+Comparing with the Figure in the paper, one can see a similar shape.
+In this case however, we are running much smaller packages that have less runnable code, which is why there are many packages with close to or 0% coverage with and without genthat.
+Yet, across the whole spectrum, genthat succeeded in increasing the code coverage.
 
 ### Table 2
 
