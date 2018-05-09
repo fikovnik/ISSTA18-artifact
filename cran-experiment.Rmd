@@ -13,12 +13,14 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-library(knitr)
 library(dplyr)
 library(tidyr)
+library(purrr)
+library(readr)
+library(stringr)
 library(ggplot2)
 
-opts_chunk$set(comment=NA)
+knitr::opts_chunk$set(echo = TRUE, comment=NA)
 
 # genthat options
 options(genthat.source_paths="/CRAN")
@@ -63,56 +65,22 @@ load_genthat_stats <- function(path) {
 }
 
 fmt <- function(x) format(round(x, 2), big.mark=",")
-
-my_avg <- function(xs) {
-  paste0(
-    fmt(mean(xs)), 
-    " (s=", 
-    fmt(sd(xs)), 
-    ", m=", 
-    fmt(median(xs)), 
-    ")"
-  )
-}
+my_avg <- function(xs) str_c(fmt(mean(xs, na.rm=TRUE)), " (s=", fmt(sd(xs, na.rm=TRUE)), ", m=", fmt(median(xs, na.rm=TRUE)), ")")
 ```
 
-This notebook reproduces a similar experiment as the one that was presented in Section 4.
-The difference is that we only select 10% or the original packages (random 10% from the original set in which tracing took less than 60 seconds---157 packages from 656 packages).
-The reason is that tracing, as indicated in the paper, takes a long time to run.
-Running the original set took 1d 18h on two virtual nodes with 60GB RAM and 16 CPU at 2.2GHz.
-On an average laptop or desktop, it might take even more.
-
-## Rerunning the experiment
-
-The repository is already contains the experiment ran (in `experiment` directory). 
-To redo the experiment, do the following steps. The `pc` indicates commands to be run at a local machine that started the docker container (_i.e._ ran the `./run.sh`), the `docker` indicates what shall be run in the container itself.
-On i7 laptop with 16GB RAM this takes about 30 minutes.
-
-1. Connect to the container
-
-```sh
-pc$ docker exec -ti issta18-genthat bash
+```{r constants from the paper, include=FALSE}
+PAPER_NPACKAGES <- 1547
+PAPER_SLOC <- 1700000
+PAPER_TEST_COVERAGE_SLOC <- 267113
+PAPER_COVERAGE_SLOC <- 704450
+PAPER_ACCURACY <- 0.8
 ```
 
-2. Become `rstudio` user and rerun the experiment
-
-```sh
-docker$ su - rstudio
-docker$ exec bash
-docker$ rm -fr experiment
-docker$ ./run-experiment.sh
-```
-
-This will run `extract-test.R` script that basically does what has been shown in the _overview_ notebook.
-It runs it in parallel for each package found in the `packages.txt` file.
-The result are two RDS files: 
-
-- a `experiment/<package_name>/coverage.RDS` - contains test code coverage from covr
-- a `experiment/<package_name>/tests.RDS` - contains the result of running `gen_from_package`
-
-plus all the regular genthat extracted tests,
+This notebook processes the results from the CRAN experiment and reproduces the data from Section 4.
 
 ## Loading the results
+
+First we load the data from packages that ran.
 
 ```{r}
 packages_df <- data_frame(
@@ -144,23 +112,76 @@ packages_all_df <-
   bind_cols(packages_gt_df)
 ```
 
-## Table 1
+Next, we load the code size.
+We ran the [cloc](http://cloc.sourceforge.net/) tool in the docker image to compute the size of R source code in all the packages in `/CRAN` directory.
+Each package has `sloc.csv` file in its root which a result of running:
+
+```sh
+cloc --quiet --csv %p/R | sed 's/,\".*$//' | tail -n +2 > %p/sloc.csv
+```
+
+where `%s` is the name of the project.
+Since this is a static information that does nto depend in anyway on our tool, all the files have been already generated during the image build.
 
 ```{r}
-ratio <- sum(packages_all_df$ran)/sum(packages_all_df$all)
+sloc <- map_dfr(packages_all_df$package, function(x) {
+  # read the output of cloc in CSV, skip all but code column
+  s <- read_csv(file.path("/CRAN", x, "sloc.csv"), col_types=cols("code"="i"))
+  # sum the code per package
+  data_frame(package=x, code=sum(s$code))
+})
+```
+
+## Results
+
+```{r, include=FALSE}
+test_coverage_sloc <- sum(sloc$code) * (mean(packages_all_df$tests_coverage, na.rm=T)/100)
+coverage_sloc <- sum(sloc$code) * (mean(packages_all_df$coverage, na.rm=T)/100)
+accuracy <- sum(packages_all_df$ran)/sum(packages_all_df$all)
+```
+
+Together, this experiment ran ```r length(readLines("packages.txt"))``` packages (the number of lines in `packages.txt`) out of which ```r nrow(packages_all_df)``` packages completed.
+This is ```r fmt(nrow(packages_all_df)/PAPER_NPACKAGES*100)```% of the packages reported in the the paper.
+These packages comprises of ```r fmt(sum(sloc$code))``` lines of code (excluding whitespace and comments), which is ```r fmt(sum(sloc$code)/PAPER_SLOC*100)```% of the original experiment.
+We selected the packages which had the original tracing time less than 2 minutes to keep the artifcat time manageable.
+
+### Summary
+
+The average test code coverage is ```r my_avg(packages_all_df$tests_coverage)```.
+With genthat this is increased to ```r my_avg(packages_all_df$coverage)```.
+In terms of source lines of code (as reported in both the paper abstract and paper introduction), **genthat improved code coverage from the original rather low value of ```r fmt(test_coverage_sloc)``` lines to ```r fmt(coverage_sloc)``` lines**.
+This is an increase of ```r fmt(coverage_sloc/test_coverage_sloc*100)```%.
+In the paper we reported ```r fmt(PAPER_COVERAGE_SLOC/PAPER_TEST_COVERAGE_SLOC*100)```%.
+
+The major results in the paper are in Table 1, Table 2 and Figure 4 which are shown bellow.
+
+Table 3 describes what are the cases of lost accurracy.
+A part of the table requires manual inspection of the failures (how to get errors has been explained in the _overview_ notebook).
+Therefore, we reports only the overall accuracy ```r fmt(accuracy*100)```% which should be similar to what we reported in the paper ```r fmt(PAPER_ACCURACY*100)```%.
+This of course depends on the package selection, yet in a resonable number of packages the numbers shall be close.
+
+Finally, Figure 5 with reverse dependencies is skipped because:
+
+1. rerunning reverse dependencies for these packages will be highly time consuming,
+2. we have already shown in the _overview_ how it is done on a single package `Rvmmin`,
+3. the above experiment shows the strategy of running genthat in a batch.
+
+### Table 1
+
+```{r}
 table1 <- tribble(
   ~Name,                      ~Overall,                            ~`Average per package`,
   "Traced unique calls",      fmt(sum(packages_all_df$all)),       my_avg(packages_all_df$all),
   "Generated tests",          fmt(sum(packages_all_df$generated)), my_avg(packages_all_df$generated),
   "Valid and Correct tests",  fmt(sum(packages_all_df$ran)),       my_avg(packages_all_df$ran),
   "Non-redundant tests",      fmt(sum(packages_all_df$kept)),      my_avg(packages_all_df$kept),
-  "Ratio of reproduced test", fmt(ratio),                          my_avg(packages_all_df$ran/packages_all_df$all)
+  "Ratio of reproduced test", fmt(accuracy),                       my_avg(packages_all_df$ran/packages_all_df$all)
 )
 
 table1
 ```
 
-## Figure 4
+### Figure 4
 
 ```{r}
 select(packages_all_df, package, coverage, tests_coverage) %>%
@@ -175,7 +196,7 @@ select(packages_all_df, package, coverage, tests_coverage) %>%
     
 ```
 
-## Table 2
+### Table 2
 
 ```{r}
 table2 <- tribble(
@@ -187,10 +208,3 @@ table2 <- tribble(
 
 table2
 ```
-
-## Summary
-
-Together, we ran  ```r length(readLines("packages.txt"))``` packages out of which succeeded ```r nrow(packages_all_df)``` packages.
-The major results in the paper are Table 1 and Figure 4 which we showed above.
-The Figure 5 with reverse dependencies is skipped because we have already shown in the _overview_ how it is done on a single package `Rvmmin` and above we have shown the strategy running genthat on multiple packages.
-

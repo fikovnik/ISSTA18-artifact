@@ -8,13 +8,13 @@ output:
     toc_depth: 2
     toc_float: true
     highlight: tango
-editor_options:
-  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
-library(knitr)
-opts_chunk$set(comment=NA)
+# this is required and Rscript will not load
+library(methods)
+
+knitr::opts_chunk$set(echo = TRUE, comment=NA)
 
 # remove previous artefacts
 if (dir.exists("tmp")) {

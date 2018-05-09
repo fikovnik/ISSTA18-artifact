@@ -346,7 +346,7 @@ nums</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">get</span>(<span class="st">&quot;is_even&quot;</span>, <span class="kw">environment</span>(<span class="kw">copy_traces</span>()[[<span class="dv">1</span>]]<span class="op">$</span>globals<span class="op">$</span>is_odd))</code></pre></div>
 <pre><code>function (x) 
 x%%2L == 0L
-&lt;environment: 0x5627c92cc610&gt;
+&lt;environment: 0x5590a20519a8&gt;
 attr(,&quot;genthat_extracted_closure&quot;)
 [1] TRUE</code></pre>
 <p>which shall be the same as in the <code>is_even</code> defined at the beginning (except the extra marking attribute used by genthat).</p>
@@ -380,7 +380,7 @@ test_file &lt;-<span class="st"> </span><span class="kw">generate_test_file</spa
 <p>The structure is <code>&lt;package-name&gt;/&lt;function-name&gt;/test-&lt;seq&gt;.{R,ext}</code> where <code>seq</code> is just an increasing number sequence. The <code>.R</code> file contains the test code and the <code>.ext</code> file stores the external variables.</p>
 <p>In our example, since we have no package name (the <code>filter</code> is defined in a global environment), the package name is <code>_NULL_</code> to emphasize this fact.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cat</span>(<span class="kw">paste</span>(<span class="kw">system2</span>(<span class="st">&quot;tree&quot;</span>, output_dir, <span class="dt">stdout=</span><span class="ot">TRUE</span>), <span class="dt">collapse=</span><span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>))</code></pre></div>
-<pre><code>/tmp/RtmpoUhdSr/filec155556e540
+<pre><code>/tmp/Rtmp8vsJVj/file407223c5e52d
 └── _NULL_
     └── filter
         ├── test-1.ext
@@ -391,16 +391,16 @@ test_file &lt;-<span class="st"> </span><span class="kw">generate_test_file</spa
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">result &lt;-<span class="st"> </span><span class="kw">test_generated_file</span>(test_file)
 result</code></pre></div>
 <pre><code>      file context   test nb failed skipped error warning  user system
-1 test-1.R         filter  1      0   FALSE FALSE       0 0.063      0
+1 test-1.R         filter  1      0   FALSE FALSE       0 0.121      0
    real
-1 0.063</code></pre>
+1 0.137</code></pre>
 <p>There is also a <code>run_generated_tests</code> function that takes a vector of test files to run consecutively. It returns vector of elapsed time as well as any encountered errors. This is useful for batch processing.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">run_generated_test</span>(test_file)</code></pre></div>
-<pre><code>/tmp/RtmpoUhdSr/filec155556e540/_NULL_/filter/test-1.R 
-                                            0.05288053 
+<pre><code>/tmp/Rtmp8vsJVj/file407223c5e52d/_NULL_/filter/test-1.R 
+                                              0.1084285 
 attr(,&quot;errors&quot;)
-/tmp/RtmpoUhdSr/filec155556e540/_NULL_/filter/test-1.R 
-                                                    NA </code></pre>
+/tmp/Rtmp8vsJVj/file407223c5e52d/_NULL_/filter/test-1.R 
+                                                     NA </code></pre>
 </div>
 <div id="cleaning-up" class="section level3">
 <h3>Cleaning up</h3>
@@ -470,46 +470,56 @@ attr(,&quot;errors&quot;)
 <p>Running the test extraction is done using <code>gen_from_package</code> which basically orchestrates the different functions we have showed in the previous section.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">result &lt;-<span class="st"> </span>
 <span class="st">  </span><span class="kw">gen_from_package</span>(<span class="st">&quot;Rvmmin&quot;</span>, <span class="dt">types=</span><span class="st">&quot;all&quot;</span>, <span class="dt">action=</span><span class="st">&quot;generate&quot;</span>, <span class="dt">prune_tests=</span><span class="ot">TRUE</span>, <span class="dt">output_dir=</span><span class="st">&quot;tmp&quot;</span>)</code></pre></div>
-<p>It generated <code>11</code> tests, with the code coverage of <code>79.5053004</code>.</p>
+<pre><code>Warning in file.remove(to_remove): cannot remove file '/home/rstudio/tmp/
+Rvmmin/Rvmminb/test-11.ext', reason 'No such file or directory'</code></pre>
+<pre><code>Warning in file.remove(to_remove): cannot remove file '/home/rstudio/tmp/
+Rvmmin/Rvmminb/test-11.R', reason 'No such file or directory'</code></pre>
+<p>It generated <code>11</code> tests, with the code coverage of <code>80.2120141</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">result</code></pre></div>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":["file"],"name":[1],"type":["chr"],"align":["left"]},{"label":["output"],"name":[2],"type":["chr"],"align":["left"]},{"label":["elapsed"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["coverage"],"name":[4],"type":["dbl"],"align":["right"]}],"data":[{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-10.R","3":"0.07259417","4":"22.43816"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-8.R","3":"0.07825255","4":"29.85866"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-6.R","3":"0.03225279","4":"31.62544"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/vignettes/Rvmmin.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-20.R","3":"0.29852414","4":"62.19081"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/vignettes/Rvmmin.R","2":"/home/rstudio/tmp/Rvmmin/Rvmminu/test-28.R","3":"0.02684116","4":"62.36749"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/vignettes/Rvmmin.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-22.R","3":"0.02375793","4":"76.85512"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-12.R","3":"0.04197526","4":"77.91519"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-18.R","3":"0.03576660","4":"78.09187"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-2.R","3":"0.03243089","4":"78.44523"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-9.R","3":"0.09022069","4":"79.32862"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/vignettes/Rvmmin.R","2":"/home/rstudio/tmp/Rvmmin/Rvmminu/test-209.R","3":"0.13101292","4":"79.50530"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["file"],"name":[1],"type":["chr"],"align":["left"]},{"label":["output"],"name":[2],"type":["chr"],"align":["left"]},{"label":["elapsed"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["coverage"],"name":[4],"type":["dbl"],"align":["right"]}],"data":[{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-8.R","3":"0.14561844","4":"22.43816"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-7.R","3":"0.05386877","4":"29.85866"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-5.R","3":"0.06138134","4":"31.62544"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/vignettes/Rvmmin.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-21.R","3":"0.44457269","4":"62.19081"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/vignettes/Rvmmin.R","2":"/home/rstudio/tmp/Rvmmin/Rvmminu/test-43.R","3":"0.03461123","4":"62.36749"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/vignettes/Rvmmin.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-22.R","3":"0.04701829","4":"76.85512"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-11.R","3":"0.08756161","4":"77.91519"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-18.R","3":"0.04838967","4":"78.09187"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-2.R","3":"0.03586960","4":"78.44523"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/examples/Rvmmin.Rd.R","2":"/home/rstudio/tmp/Rvmmin/Rvmmin/test-12.R","3":"0.06499863","4":"79.32862"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/vignettes/Rvmmin.R","2":"/home/rstudio/tmp/Rvmmin/Rvmminu/test-46.R","3":"0.06944609","4":"80.21201"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <p>The tests were generated in <code>tmp/Rvmmin</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">cat</span>(<span class="kw">paste</span>(<span class="kw">system2</span>(<span class="st">&quot;tree&quot;</span>, <span class="st">&quot;tmp/Rvmmin&quot;</span>, <span class="dt">stdout=</span><span class="ot">TRUE</span>), <span class="dt">collapse=</span><span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>))</code></pre></div>
 <pre><code>tmp/Rvmmin
 ├── Rvmmin
-│   ├── test-10.ext
-│   ├── test-10.R
+│   ├── test-11.ext
+│   ├── test-11.R
 │   ├── test-12.ext
 │   ├── test-12.R
 │   ├── test-18.ext
 │   ├── test-18.R
-│   ├── test-20.ext
-│   ├── test-20.R
+│   ├── test-21.ext
+│   ├── test-21.R
 │   ├── test-22.ext
 │   ├── test-22.R
 │   ├── test-2.ext
 │   ├── test-2.R
-│   ├── test-6.ext
-│   ├── test-6.R
+│   ├── test-5.ext
+│   ├── test-5.R
+│   ├── test-7.ext
+│   ├── test-7.R
 │   ├── test-8.ext
-│   ├── test-8.R
-│   ├── test-9.ext
-│   └── test-9.R
+│   └── test-8.R
 └── Rvmminu
-    ├── test-209.ext
-    ├── test-209.R
-    ├── test-28.ext
-    └── test-28.R
+    ├── test-15.ext
+    ├── test-15.R
+    ├── test-17.ext
+    ├── test-17.R
+    ├── test-43.ext
+    ├── test-43.R
+    ├── test-46.ext
+    ├── test-46.R
+    ├── test-5.ext
+    └── test-5.R
 
-2 directories, 22 files</code></pre>
+2 directories, 28 files</code></pre>
 <p>The <code>result</code> return value also contains some attributes with additional information. The <code>stats</code> provides overview of the test extraction:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">attr</span>(result, <span class="st">&quot;stats&quot;</span>)</code></pre></div>
-<pre><code>        all   generated         ran        kept    coverage     elapsed 
-301.0000000 301.0000000  87.0000000  11.0000000  79.5053004   0.8636291 </code></pre>
+<pre><code>       all  generated        ran       kept   coverage    elapsed 
+292.000000 292.000000  85.000000  11.000000  80.212014   1.093336 </code></pre>
 <p>where</p>
 <ul>
 <li><code>all</code> is the number of unique traces (unique arguments / return values)</li>
@@ -523,7 +533,7 @@ attr(,&quot;errors&quot;)
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">head</span>(<span class="kw">attr</span>(result, <span class="st">&quot;errors&quot;</span>))</code></pre></div>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["file"],"name":[1],"type":["chr"],"align":["left"]},{"label":["output"],"name":[2],"type":["lgl"],"align":["right"]},{"label":["error"],"name":[3],"type":["chr"],"align":["left"]}],"data":[{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/examples/Rvmmin.Rd.R","2":"NA","3":"Test failed: 'Rvmmin'\\n* Rvmmin:::Rvmmin(par = xx, fn = genrose.f, gr = \"grfwd\", gs = 10) not equal to list(...).\\nComponent “counts”: Mean relative difference: 0.1517857","_rn_":"1"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/examples/Rvmmin.Rd.R","2":"NA","3":"Test failed: 'Rvmmin'\\n* Rvmmin:::Rvmmin(...) not equal to list(...).\\nComponent “counts”: Mean relative difference: 0.2068966","_rn_":"2"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/tests/BTbad.R","2":"NA","3":"Test failed: 'Rvmmin'\\n* Parameter out of bounds\\n1: expect_equal(Rvmmin:::Rvmmin(par = xx, fn = bt.f, gr = bt.g, lower = lower, upper = upper, bdmsk = bdmsk, control = list(trace = 1, keepinputpar = TRUE)), list(\"Parameter out of bounds\", \\n       Rvmmin(xx, bt.f, bt.g, lower, upper, bdmsk, control = list(trace = 1, keepinputpar = TRUE)), genthat::with_env(function(e) {\\n           call <- conditionCall(e)\\n           if (!is.null(call)) {\\n               if (identical(call[[1L]], quote(doTryCatch))) call <- sys.call(-4L)\\n               dcall <- deparse(call)[1L]\\n               prefix <- paste(\"Error in\", dcall, \": \")\\n               LONG <- 75L\\n               msg <- conditionMessage(e)\\n               sm <- strsplit(msg, \"\\\\n\")[[1L]]\\n               w <- 14L + nchar(dcall, type = \"w\") + nchar(sm[1L], type = \"w\")\\n               if (is.na(w)) w <- 14L + nchar(dcall, type = \"b\") + nchar(sm[1L], type = \"b\")\\n               if (w > LONG) prefix <- paste0(prefix, \"\\\\n  \")\\n           } else prefix <- \"Error : \"\\n           msg <- paste0(prefix, conditionMessage(e), \"\\\\n\")\\n           .Internal(seterrmessage(msg[1L]))\\n           if (!silent && identical(getOption(\"show.error.messages\"), TRUE)) {\\n               cat(msg, file = outFile)\\n               .Internal(printDeferredWarnings())\\n           }\\n           invisible(structure(msg, class = \"try-error\", condition = e))\\n       }, env = list2env(list(silent = FALSE, outFile = structure(2L, class = c(\"terminal\", \"connection\"))), parent = baseenv())))) at /home/rstudio/tmp/Rvmmin/Rvmmin/test-19.R:16\\n2: quasi_label(enquo(object), label)\\n3: eval_bare(get_expr(quo), get_env(quo))\\n4: Rvmmin:::Rvmmin(par = xx, fn = bt.f, gr = bt.g, lower = lower, upper = upper, bdmsk = bdmsk, control = list(trace = 1, keepinputpar = TRUE))\\n5: stop(\"Parameter out of bounds\")","_rn_":"3"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/vignettes/Rvmmin.R","2":"NA","3":"Test failed: 'Rvmmin'\\n* Rvmmin:::Rvmmin(...) not equal to list(...).\\nComponent “counts”: Mean relative difference: 0.2","_rn_":"4"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/examples/Rvmmin.Rd.R","2":"NA","3":"Test failed: 'Rvmmin'\\n* Rvmmin:::Rvmmin(par = xx, fn = genrose.f, gs = 10) not equal to list(...).\\nComponent “counts”: Mean relative difference: 0.1812865","_rn_":"5"},{"1":"/tmp/RtmpoUhdSr/genthat-gen_from_packagec1567b64803/vignettes/Rvmmin.R","2":"NA","3":"Test failed: 'Rvmminb'\\n* Rvmmin:::Rvmminb(...) not equal to list(...).\\nComponent “counts”: Mean relative difference: 0.2","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["file"],"name":[1],"type":["chr"],"align":["left"]},{"label":["output"],"name":[2],"type":["lgl"],"align":["right"]},{"label":["error"],"name":[3],"type":["chr"],"align":["left"]}],"data":[{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/examples/Rvmmin.Rd.R","2":"NA","3":"Test failed: 'Rvmmin'\\n* Rvmmin:::Rvmmin(par = xx, fn = genrose.f, gr = \"grfwd\", gs = 10) not equal to list(...).\\nComponent “counts”: Mean relative difference: 0.1284404","_rn_":"1"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/examples/Rvmmin.Rd.R","2":"NA","3":"Test failed: 'Rvmmin'\\n* Rvmmin:::Rvmmin(...) not equal to list(...).\\nComponent “counts”: Mean relative difference: 0.2068966","_rn_":"2"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/tests/BTbad.R","2":"NA","3":"Test failed: 'Rvmmin'\\n* Parameter out of bounds\\n1: expect_equal(Rvmmin:::Rvmmin(par = xx, fn = bt.f, gr = bt.g, lower = lower, upper = upper, \\n       bdmsk = bdmsk, control = list(trace = 1, keepinputpar = TRUE)), list(\"Parameter out of bounds\", \\n       Rvmmin(xx, bt.f, bt.g, lower, upper, bdmsk, control = list(trace = 1, keepinputpar = TRUE)), \\n       genthat::with_env(function(e) {\\n           call <- conditionCall(e)\\n           if (!is.null(call)) {\\n               if (identical(call[[1L]], quote(doTryCatch))) call <- sys.call(-4L)\\n               dcall <- deparse(call)[1L]\\n               prefix <- paste(\"Error in\", dcall, \": \")\\n               LONG <- 75L\\n               msg <- conditionMessage(e)\\n               sm <- strsplit(msg, \"\\\\n\")[[1L]]\\n               w <- 14L + nchar(dcall, type = \"w\") + nchar(sm[1L], type = \"w\")\\n               if (is.na(w)) w <- 14L + nchar(dcall, type = \"b\") + nchar(sm[1L], type = \"b\")\\n               if (w > LONG) prefix <- paste0(prefix, \"\\\\n  \")\\n           } else prefix <- \"Error : \"\\n           msg <- paste0(prefix, conditionMessage(e), \"\\\\n\")\\n           .Internal(seterrmessage(msg[1L]))\\n           if (!silent && identical(getOption(\"show.error.messages\"), TRUE)) {\\n               cat(msg, file = outFile)\\n               .Internal(printDeferredWarnings())\\n           }\\n           invisible(structure(msg, class = \"try-error\", condition = e))\\n       }, env = list2env(list(silent = FALSE, outFile = structure(2L, class = c(\"terminal\", \\n           \"connection\"))), parent = baseenv())))) at /home/rstudio/tmp/Rvmmin/Rvmmin/test-19.R:16\\n2: quasi_label(enquo(object), label)\\n3: eval_bare(get_expr(quo), get_env(quo))\\n4: Rvmmin:::Rvmmin(par = xx, fn = bt.f, gr = bt.g, lower = lower, upper = upper, bdmsk = bdmsk, \\n       control = list(trace = 1, keepinputpar = TRUE))\\n5: stop(\"Parameter out of bounds\")","_rn_":"3"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/vignettes/Rvmmin.R","2":"NA","3":"Test failed: 'Rvmmin'\\n* Rvmmin:::Rvmmin(...) not equal to list(...).\\nComponent “counts”: Mean relative difference: 0.06451613","_rn_":"4"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/examples/Rvmmin.Rd.R","2":"NA","3":"Test failed: 'Rvmmin'\\n* Rvmmin:::Rvmmin(par = xx, fn = genrose.f, gs = 10) not equal to list(...).\\nComponent “counts”: Mean relative difference: 0.1257862","_rn_":"5"},{"1":"/tmp/Rtmp8vsJVj/genthat-gen_from_package4072768f390a/vignettes/Rvmmin.R","2":"NA","3":"Test failed: 'Rvmminb'\\n* Rvmmin:::Rvmminb(...) not equal to list(...).\\nComponent “counts”: Mean relative difference: 0.06451613","_rn_":"6"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 <p>This is useful for debugging.</p>
@@ -546,8 +556,8 @@ rdeps</code></pre></div>
 <p>Looking at</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">attr</span>(result_rdeps, <span class="st">&quot;stats&quot;</span>)</code></pre></div>
 <pre><code>        all   generated         ran        kept    coverage     elapsed 
-357.0000000 357.0000000 123.0000000  16.0000000  83.5689046   0.5766411 </code></pre>
-<p>we can see that the running the reverse dependencies add a <code>5</code> more tests and increased the coverage from <code>79.5053004</code> to <code>83.5689046</code>.</p>
+348.0000000 348.0000000 120.0000000  16.0000000  83.5689046   0.8054302 </code></pre>
+<p>we can see that the running the reverse dependencies add a <code>5</code> more tests and increased the coverage from <code>80.2120141</code> to <code>83.5689046</code>.</p>
 </div>
 <div id="appendices" class="section level2">
 <h2>Appendices</h2>

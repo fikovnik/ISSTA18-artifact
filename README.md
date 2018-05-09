@@ -10,13 +10,9 @@ output:
     toc_float: yes
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, comment=NA)
-```
 
-```{r constants from the paper, include=FALSE}
-PAPER_NPACKAGES <- 1547
-```
+
+
 
 ## Artifact description
 
@@ -41,8 +37,18 @@ The artifact is provided as a docker image `prlprg/issta18-genthat`.
 The image contains R 3.4 with a web version of Rstudio and a set of sample packages.
 To run the artifact, please use `run.sh`:
 
-```{sh echo=FALSE}
-cat run.sh
+
+```
+#!/bin/sh
+
+docker run \
+       --rm \
+       --name issta18-genthat \
+       -p 8787:8787 \
+       -v $(pwd):/home/rstudio \
+       -e ROOT=TRUE \
+       -e PASSWORD=rstudio \
+       prlprg/issta18-genthat
 ```
 
 This shall download the already prebuild docker image from [docker hub](https://hub.docker.com/r/fikovnik/issta18-artifact/).
@@ -76,8 +82,8 @@ docker exec -u rstudio -w /home/rstudio issta18-genthat Rscript -e 'rmarkdown::r
 
 ### CRAN experiment (Section 4)
 
-The Section 4 presents an experiment that runs genthat on ```r PAPER_NPACKAGES``` [CRAN](https://cran.r-project.org/) packages.
-In this artifact, we present the same one, with the difference that only ```r length(readLines("packages-all.txt"))``` packages are selected.
+The Section 4 presents an experiment that runs genthat on ``1547`` [CRAN](https://cran.r-project.org/) packages.
+In this artifact, we present the same one, with the difference that only ``858`` packages are selected.
 The reason is that tracing, as indicated in the paper, takes a long time to run.
 These packages represent all the original ones for which tracing took less than 2 minutes.
 Running the original package set took **1d 18h** on two virtual nodes with 60GB RAM and 16 CPU at 2.2GHz.
@@ -152,6 +158,13 @@ However, there should be a small number of them.
 The image is hosted on the [docker hub](https://hub.docker.com/r/fikovnik/issta18-artifact/) and shall be available for download.
 To make a local build run `build.sh`:
 
-```{sh echo=FALSE}
-cat build.sh
+
+```
+#!/bin/sh
+
+docker build \
+       --rm \
+       --build-arg REPO=https://mirrors.nic.cz/R \
+       -t prlprg/issta18-genthat \
+       .
 ```
