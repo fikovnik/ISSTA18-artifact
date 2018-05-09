@@ -39,11 +39,13 @@ git clone https://github.com/fikovnik/ISSTA18-artifact
 
 The artifact is provided as a docker image `prlprg/issta18-genthat`.
 The image contains R 3.4 with a web version of Rstudio and a set of sample packages.
-To run the artifact, please use `run.sh`:
+To run the docker image, please run:
 
-```{sh echo=FALSE}
-cat run.sh
+```sh
+./run.sh
 ```
+
+from the cloned repository.
 
 This shall download the already prebuilt docker image from [docker hub](https://hub.docker.com/r/fikovnik/issta18-artifact/).
 If you prefer to build your own, please follow the instructions at the end of this document.
@@ -65,14 +67,15 @@ There are two ways to run it:
 
 1. Interactively via Rstudio that shall be available on [http://localhost:8787](http://localhost:8787).
    The username is `rstudio` and the password is `rstudio`.
-   In the Rstudio application, please open the 'overview.Rmd'.
+   In the Rstudio application, please open the `overview.Rmd`.
    Now you can either run the code _chunk-by-chunk_ or just knit the whole document by pressing Ctrl+Alt+K (Command+Shift+K on OSX). 
-   Knitted documents in HTML are already provided in the repository.
+   Knitted document in HTML is already provided in the repository---[`overview.html`](http://localhost:8787/files/overview.html).
    
 2. Simply knit the whole document by running from the cloned repository:
 ```sh
 docker exec -u rstudio -w /home/rstudio issta18-genthat Rscript -e 'rmarkdown::render("overview.Rmd")'
 ```
+and then open the [`overview.html`](http://localhost:8787/files/overview.html).
 
 ### CRAN experiment (Section 4)
 
@@ -139,6 +142,7 @@ plus all the regular genthat extracted tests.
 ```sh
 docker exec -u rstudio -w /home/rstudio issta18-genthat Rscript -e 'rmarkdown::render("cran-experiment.Rmd")'
 ```
+and then open the resulting [`cran-experiment.html`](http://localhost:8787/files/cran-experiment.html)
 
 #### A note on running package code
 

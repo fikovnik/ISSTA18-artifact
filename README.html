@@ -262,17 +262,9 @@ div.tocify {
 <h2>Running the artifact</h2>
 <p>Clone the repository <a href="https://github.com/fikovnik/ISSTA18-artifact">fikovnik/ISSTA18-artifact</a>:</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="fu">git</span> clone https://github.com/fikovnik/ISSTA18-artifact</code></pre></div>
-<p>The artifact is provided as a docker image <code>prlprg/issta18-genthat</code>. The image contains R 3.4 with a web version of Rstudio and a set of sample packages. To run the artifact, please use <code>run.sh</code>:</p>
-<pre><code>#!/bin/sh
-
-docker run \
-       --rm \
-       --name issta18-genthat \
-       -p 8787:8787 \
-       -v $(pwd):/home/rstudio \
-       -e ROOT=TRUE \
-       -e PASSWORD=rstudio \
-       prlprg/issta18-genthat</code></pre>
+<p>The artifact is provided as a docker image <code>prlprg/issta18-genthat</code>. The image contains R 3.4 with a web version of Rstudio and a set of sample packages. To run the docker image, please run:</p>
+<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">./run.sh</span></code></pre></div>
+<p>from the cloned repository.</p>
 <p>This shall download the already prebuilt docker image from <a href="https://hub.docker.com/r/fikovnik/issta18-artifact/">docker hub</a>. If you prefer to build your own, please follow the instructions at the end of this document. If you ran the docker image manually, please make sure its name is <code>issta18-artifact</code>.</p>
 <p>The artifact is composed of two parts:</p>
 <ul>
@@ -284,9 +276,10 @@ docker run \
 <h3>Genthat Overview</h3>
 <p>This part essentially explains how genthat works and reproduces all the examples that are in the paper. There are two ways to run it:</p>
 <ol style="list-style-type: decimal">
-<li><p>Interactively via Rstudio that shall be available on <a href="http://localhost:8787" class="uri">http://localhost:8787</a>. The username is <code>rstudio</code> and the password is <code>rstudio</code>. In the Rstudio application, please open the ‘overview.Rmd’. Now you can either run the code <em>chunk-by-chunk</em> or just knit the whole document by pressing Ctrl+Alt+K (Command+Shift+K on OSX). Knitted documents in HTML are already provided in the repository.</p></li>
+<li><p>Interactively via Rstudio that shall be available on <a href="http://localhost:8787" class="uri">http://localhost:8787</a>. The username is <code>rstudio</code> and the password is <code>rstudio</code>. In the Rstudio application, please open the <code>overview.Rmd</code>. Now you can either run the code <em>chunk-by-chunk</em> or just knit the whole document by pressing Ctrl+Alt+K (Command+Shift+K on OSX). Knitted document in HTML is already provided in the repository—<a href="http://localhost:8787/files/overview.html"><code>overview.html</code></a>.</p></li>
 <li><p>Simply knit the whole document by running from the cloned repository:</p>
-<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">docker</span> exec -u rstudio -w /home/rstudio issta18-genthat Rscript -e <span class="st">'rmarkdown::render(&quot;overview.Rmd&quot;)'</span></code></pre></div></li>
+<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">docker</span> exec -u rstudio -w /home/rstudio issta18-genthat Rscript -e <span class="st">'rmarkdown::render(&quot;overview.Rmd&quot;)'</span></code></pre></div>
+<p>and then open the <a href="http://localhost:8787/files/overview.html"><code>overview.html</code></a>.</p></li>
 </ol>
 </div>
 <div id="cran-experiment-section-4" class="section level3">
@@ -326,7 +319,8 @@ plus all the regular genthat extracted tests.<br />
 </ul>
 <ol start="4" style="list-style-type: decimal">
 <li><p>Knit the <code>cran-experiment.Rmd</code> using provided <a href="http://localhost:8787">R studio</a> or run</p>
-<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">docker</span> exec -u rstudio -w /home/rstudio issta18-genthat Rscript -e <span class="st">'rmarkdown::render(&quot;cran-experiment.Rmd&quot;)'</span></code></pre></div></li>
+<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">docker</span> exec -u rstudio -w /home/rstudio issta18-genthat Rscript -e <span class="st">'rmarkdown::render(&quot;cran-experiment.Rmd&quot;)'</span></code></pre></div>
+<p>and then open the resulting <a href="http://localhost:8787/files/cran-experiment.html"><code>cran-experiment.html</code></a></p></li>
 </ol>
 </div>
 <div id="a-note-on-running-package-code" class="section level4">
