@@ -28,6 +28,8 @@ install.packages(
   INSTALL_opts = c("--example", "--install-tests", "--with-keep.source", "--no-multiarch"),
   quiet=T
 )
+
+fmt <- function(x) format(round(x, 2), big.mark=",")
 ```
 
 In this R notebook, we provide an overview of genthat package. We start with its 
@@ -304,7 +306,7 @@ result <-
   gen_from_package("Rvmmin", types="all", action="generate", prune_tests=TRUE, output_dir="tmp")
 ```
 
-It generated ```r nrow(result)``` tests, with the code coverage of ```r max(result$coverage)```.
+It generated `r nrow(result)` tests, with the code coverage of `r fmt(max(result$coverage))`%.
 
 ```{r}
 result
@@ -329,7 +331,7 @@ where
 - `generated` is the number of successfully generated tests
 - `ran` is the number of tests that passed
 - `kept` is the number of tests that were kept after the pruning based on coverage
-- `coverage` is the resulting coverage of R code
+- `coverage` is the resulting coverage of R code in %
 - `elapsed` is the time it took to run the generated tests
 
 The `errros` provides details about the failures in tracing, tests generation and test running:
@@ -343,7 +345,7 @@ This is useful for debugging.
 ## Extracting tests from reverse dependencies
 
 Genthat can also be use to extract tests for a package from code that comes from the package's 
-reverse dependencies. In this case we already have pretty high code coverage, but we cna try to
+reverse dependencies. In this case we already have pretty high code coverage, but we can try to
 boost it up a bit more.
 
 First, we need to find what are the reverse dependencies:
@@ -354,7 +356,7 @@ rdeps <- unlist(rdeps, use.names=FALSE)
 rdeps
 ```
 
-We use only direct reverse dependecies. While we can use also indirect ones, it usually does not bring much and only takes a lot of time to run.
+We use only direct reverse dependencies. While we can use also indirect ones, it usually does not bring much and only takes a lot of time to run.
 
 The call to `gen_from_package` is almost the same as with only the package code with the
 difference that we specify what packages to run:
@@ -373,8 +375,8 @@ Looking at
 attr(result_rdeps, "stats")
 ```
 
-we can see that the running the reverse dependencies add a ```r nrow(result_rdeps) - nrow(result)``` more tests and 
-increased the coverage from ```r max(result$coverage)``` to ```r max(result_rdeps$coverage)```.
+we can see that the running the reverse dependencies add a `r nrow(result_rdeps) - nrow(result)` more tests and 
+increased the coverage from `r fmt(max(result$coverage))`% to `r fmt(max(result_rdeps$coverage))`%.
 
 ## Appendices
 

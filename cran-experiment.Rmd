@@ -121,7 +121,7 @@ cloc --quiet --csv %p/R | sed 's/,\".*$//' | tail -n +2 > %p/sloc.csv
 ```
 
 where `%s` is the name of the project.
-Since this is a static information that does nto depend in anyway on our tool, all the files have been already generated during the image build.
+Since this is a static information that does not depend in anyway on our tool, all the files have been already generated during the image build.
 
 ```{r}
 sloc <- map_dfr(packages_all_df$package, function(x) {
@@ -142,8 +142,8 @@ accuracy <- sum(packages_all_df$ran)/sum(packages_all_df$all)
 
 Together, this experiment ran `r length(readLines("packages.txt"))` packages (the number of lines in `packages.txt`) out of which `r nrow(packages_all_df)` packages completed.
 This is `r fmt(nrow(packages_all_df)/PAPER_NPACKAGES*100)`% of the packages reported in the the paper.
-These packages comprises of `r fmt(sum(sloc$code))` lines of code (excluding whitespace and comments), which is `r fmt(sum(sloc$code)/PAPER_SLOC*100)`% of the original experiment.
-We selected the packages which had the original tracing time less than 2 minutes to keep the artifcat time manageable.
+These packages comprises of `r fmt(sum(sloc$code))` lines of code (excluding white space and comments), which is `r fmt(sum(sloc$code)/PAPER_SLOC*100)`% of the original experiment.
+We selected the packages which had the original tracing time less than 2 minutes to keep the artifact time manageable.
 
 ### Summary
 
@@ -155,10 +155,10 @@ In the paper we reported `r fmt(PAPER_COVERAGE_SLOC/PAPER_TEST_COVERAGE_SLOC*100
 
 The major results in the paper are in Table 1, Table 2 and Figure 4 which are shown bellow.
 
-Table 3 describes what are the cases of lost accurracy.
+Table 3 describes what are the cases of lost accuracy.
 A part of the table requires manual inspection of the failures (how to get errors has been explained in the _overview_ notebook).
 Therefore, we reports only the overall accuracy `r fmt(accuracy*100)`% which should be similar to what we reported in the paper `r fmt(PAPER_ACCURACY*100)`%.
-This of course depends on the package selection, yet in a resonable number of packages the numbers shall be close.
+This of course depends on the package selection, yet in a reasonable number of packages the numbers shall be close.
 
 Finally, Figure 5 with reverse dependencies is skipped because:
 
