@@ -45,7 +45,7 @@ from the cloned repository.
 
 This shall download the already prebuilt docker image from [docker hub](https://hub.docker.com/r/fikovnik/issta18-artifact/).
 If you prefer to build your own, please follow the instructions at the end of this document.
-If you ran the docker image manually, please make sure its name is `issta18-artifact`.
+If you ran the docker image manually, please make sure its name is `issta18-genthat`.
 
 The artifact is composed of two parts:
 
