@@ -358,6 +358,10 @@ docker build \
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">brew</span> cask install docker</code></pre></div>
 <p>in case you see <code>docker: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?.</code> error message cf: <a href="https://stackoverflow.com/a/44719239" class="uri">https://stackoverflow.com/a/44719239</a></p>
 </div>
+<div id="docker-on-linux" class="section level3">
+<h3>Docker on Linux</h3>
+<p>In some distribution the package does not add the current user to <code>docker</code> group. In this case, either add yourself to <code>docker</code> group or run the <code>./run*</code> commands with <code>sudo</code>.</p>
+</div>
 </div>
 
 

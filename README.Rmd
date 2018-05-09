@@ -180,3 +180,8 @@ brew cask install docker
 
 in case you see `docker: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?.` error message
 cf: https://stackoverflow.com/a/44719239
+
+### Docker on Linux
+
+In some distribution the package does not add the current user to `docker` group.
+In this case, either add yourself to `docker` group or run the `./run*` commands with `sudo`.
