@@ -127,7 +127,6 @@ Rvmmin <- function(par, fn, gr = NULL, lower = NULL,
     if ((length(upper) == 1) && (npar > 1) ) upper <- rep(upper, npar) # fix 150604
     if (any(is.infinite(lower))) lower[which(is.infinite(lower))] <- -.Machine$double.xmax
     if (any(is.infinite(upper))) upper[which(is.infinite(upper))] <-  .Machine$double.xmax
-    ### Check bounds feasible
     if (control$checkbounds) {
        btest <- bmchk(par, lower = lower, upper = upper, bdmsk = bdmsk, 
              trace = control$trace)
@@ -152,7 +151,6 @@ Rvmmin <- function(par, fn, gr = NULL, lower = NULL,
     lower <- btest$lower
     upper <- btest$upper
     control$checkbounds<-NULL # to avoid problems in subsidiary routines
-    ############## end bounds check #############
     ans <- Rvmminb(par, fn, gr, lower = lower, 
         upper = upper, bdmsk = bdmsk, control = control, ...)
     } else {

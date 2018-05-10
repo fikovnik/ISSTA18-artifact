@@ -146,7 +146,6 @@ Rvmminb <- function(par, fn, gr = NULL, lower = NULL,
     stop("A gradient calculation (analytic or numerical) MUST be provided for Rvmminb")
   }
   if (is.character(gr)) { # assume numerical gradient
-  # Convert string to function call, assuming it is a numerical gradient function
     if (trace > 0) cat("WARNING: using gradient approximation '",gr,"'\n")
     mygr<-function(par=par, userfn=fn, ...){
         do.call(gr, list(par, userfn, ...))
@@ -195,9 +194,6 @@ Rvmminb <- function(par, fn, gr = NULL, lower = NULL,
           cat("zeroing gradient because of failure\n")
       }
       c <- g  # save gradient
-      ## Bounds and masks adjustment of gradient ##
-      ## current version with looping -- later try to vectorize
-      ##         if (bounds) 
       if (trace > 3) {
            cat("bdmsk:")
            print(bdmsk)
@@ -229,8 +225,6 @@ Rvmminb <- function(par, fn, gr = NULL, lower = NULL,
                 cat("proj-g:")
                 print(g)
              }
-             ## end bounds and masks adjustment of gradient
-      ###    }  # if bounds
       t <- as.vector(-B %*% g)  # compute search direction
       if (!all(is.numeric(t))) 
           t <- rep(0, n)  # 110619
@@ -252,33 +246,21 @@ Rvmminb <- function(par, fn, gr = NULL, lower = NULL,
           gradproj <- 0  # force null
       }
       if (gradproj < 0) {
-        # Must be going downhill
-        ########################################################
-        ####      Backtrack only Line search                ####
         changed <- TRUE  # Need to set so loop will start
         steplength <- oldstep # 131202 - 1 seems best value (Newton step)
         while ((f >= fmin) && changed && (!accpoint)) {
-          # We seek a lower point, but must change parameters too
-          ###if (bounds) { # MUST have bounds in Rvmminb
-          # Box constraint -- adjust step length for free parameters
           for (i in 1:n) { # loop on parameters -- vectorize??
             if ((bdmsk[i] == 1) && (t[i] != 0)) {
-              # only concerned with free parameters and non-zero search dimension
               if (t[i] < 0) {
-                # going down. Look at lower bound
                 trystep <- (lower[i] - par[i])/t[i]  # t[i] < 0 so this is positive
               } else {
-                # going up, check upper bound
                 trystep <- (upper[i] - par[i])/t[i]  # t[i] > 0 so this is positive
               }
               if (trace > 2) cat("steplength, trystep:", steplength, trystep, "\n")
               steplength <- min(steplength, trystep)  # reduce as necessary
             }  # end steplength reduction
           }  # end loop on i to reduce step length
-          # end box constraint adjustment of step length
           if (trace > 1) cat("reset steplength=", steplength, "\n")
-          ###  }  # end if bounds
-          # end box constraint adjustment of step length
           bvec <- par + steplength * t
           if (trace > 2) {
             cat("new bvec:")
@@ -286,7 +268,6 @@ Rvmminb <- function(par, fn, gr = NULL, lower = NULL,
           }
           changed <- (!identical((bvec + reltest), (par + reltest)) )
           if (changed) {
-            # compute new step, if possible
             f <- try(fn(bvec, ...))
             if (class(f) == "try-error") f <- .Machine$double.xmax
             if (maximize) f <- -f
@@ -307,15 +288,12 @@ Rvmminb <- function(par, fn, gr = NULL, lower = NULL,
                 print(bvec)
               }
               msg='Function is not calculable at an intermediate point'
-              #  stop('f is NA')
               conv <- 21
               f <- dblmax  # try big function to escape
               keepgoing <- FALSE
               break
             }
             if (f < fmin) {
-              # We have a lower point. Is it 'low enough' i.e.,
-              #   acceptable
               accpoint <- (f <= fmin + gradproj * steplength * acctol)
               if (trace > 2) cat("accpoint = ", accpoint,"\n")
             }
@@ -331,24 +309,18 @@ Rvmminb <- function(par, fn, gr = NULL, lower = NULL,
       }  # end if gradproj<0
       if (accpoint) {
         fmin <- f # remember to save the value 150112
-        # matrix update if acceptable point.
-        ### if (bounds) {
         for (i in 1:n) { ## Reactivate constraints?
           if (bdmsk[i] == 1) { # only interested in free parameters
-            # make sure < not <= below to avoid Inf comparisons
             if ((bvec[i] - lower[i]) < ceps * (abs(lower[i]) + 1)) {
-              # are we near or lower than lower bd
               if (trace > 2) cat("(re)activate lower bd ", i, " at ", lower[i], "\n")
               bdmsk[i] <- -3
             }  # end lower bd reactivate
             if ((upper[i] - bvec[i]) < ceps * (abs(upper[i]) + 1)) {
-              # are we near or above upper bd
               if (trace > 2) cat("(re)activate upper bd ", i," at ", upper[i], "\n")
               bdmsk[i] <- -1
             }  # end lower bd reactivate
           }  # end test on free params
         }  # end reactivate constraints loop
-        ###   }  # if bounds
         test <- try(g <- mygr(bvec, ...), silent = TRUE) 
         if (class(test) == "try-error") stop("Bad gradient!!")
         if (any(is.nan(g))) stop("NaN in gradient")
@@ -371,17 +343,12 @@ Rvmminb <- function(par, fn, gr = NULL, lower = NULL,
           conv <- 2
           break
         }
-        ## 150107 check on breakout
-        ## if (! keepgoing) stop("break with small gnorm failed")
         t <- as.vector(steplength * t)
         c <- as.vector(g - c)
         D1 <- sum(t * c)
         if (D1 > 0) {
           y <- as.vector(crossprod(B, c))
           D2 <- as.double(1+crossprod(c,y)/D1)  
-          # as.double because D2 is a 1 by 1 matrix otherwise
-          # May be able to be more efficient below -- need to use
-          #   outer function
           B <- B - (outer(t, y) + outer(y, t) - D2 * outer(t, t))/D1
         }
         else {
@@ -398,7 +365,6 @@ Rvmminb <- function(par, fn, gr = NULL, lower = NULL,
       else { # no acceptable point
         if (trace > 0) cat("No acceptable point\n")
         if ((ig == ilast) && ((ig > 2) || (abs(gradproj) < (1 + abs(fmin))*ctrl$eps*ctrl$eps))) {
-          # we reset to gradient and did new linesearch
           keepgoing <- FALSE  # no progress possible
           if (conv < 0) { # conv == -1 is used to indicate it is not set
             conv <- 0
