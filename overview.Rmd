@@ -14,7 +14,7 @@ output:
 # this is required and Rscript will not load
 library(methods)
 
-knitr::opts_chunk$set(echo = TRUE, comment=NA)
+knitr::opts_chunk$set(echo = TRUE, comment=NA, cache=TRUE)
 
 # remove previous artefacts
 if (dir.exists("tmp")) {
@@ -32,10 +32,9 @@ install.packages(
 fmt <- function(x) format(round(x, 2), big.mark=",")
 ```
 
-In this R notebook, we provide an overview of genthat package. We start with its 
-low-level API to show how a test is extracted from a function call using examples 
-based on the code shown in sections 2 and 3 in the paper. Next, we show how the 
-test extraction process can be automated and run on a a whole package.
+In this R notebook, we provide an overview of the genthat package.
+We start with its low-level API to show how a test is extracted from a function call using examples based on the code shown in sections 2 and 3 in the paper.
+Next, we show how the test extraction process can be automated and run on a a whole package including its reverse dependencies.
 
 ## Basics
 
@@ -73,24 +72,18 @@ filter(nums, is_odd)
 ### Loading genthat
 
 In order to use genthat, we need to load it.
-It is a regular R package that has been already installed in the 
-docker image so we directly use the `library` function:
+It is a regular R package that has been already installed in the docker image so we directly use the `library` function:
 
 ```{r}
 library(genthat)
 ```
 
-
 ### Function tracing
 
 Genthat extracts test from _traces_, which are recorded function invocations.
 To capture invocations of a function, we need to decorate it. 
-The `decorate_function` modifies the original function to additionally records
-its arguments, return values and the current state of the random number
-generator.
-
-Decorating is done using `decorate_function`. Before calling that we can 
-double check the body of the `filter` function defined above:
+This is done by the `decorate_function` that modifies the original function body to additionally records its arguments, return values and the current state of the random number generator.
+Before calling the function we can double check the body of the `filter` function defined above:
 
 ```{r}
 body(filter)
@@ -103,40 +96,32 @@ After calling:
 decorate_function(filter)
 ```
 
-the body will be changed:
+the body is changed to:
 
 ```{r}
 body(filter)
 ```
 
-The inserted code has two parts: a prologue that runs before any
-of the original function’s code and an epilogue that runs right
-before the function exits. The latter relies on the on.exit hook
-provided by R. The prologue records the random seed. Due to R’s
-lazy nature, recording of the argument values is done at the end
-to avoid forcing a promise before it is needed—that might cause
-a side effect and change the result of the program or cause an
-error. With the exception of environments, R values are immutable
-with a copy on write semantics, so any modification of function
-arguments in the function’s body will trigger their duplication.
-There are two things that need to be done before recording call
-details. First, tracing must be temporally disabled. Next, we need
-to check whether the function terminated normally or threw an
-exception. A call is only recorded in the case the function did not
-fail.
+The inserted code has two parts: a prologue that runs before any of the original function’s code and an epilogue that runs right before the function exits. 
+The latter relies on the `on.exit` hook provided by R.
+The prologue records the random seed.
+Due to R’s lazy nature, recording of the argument values is done at the end to avoid forcing a promise before it is needed—that might cause a side effect and change the result of the program or cause an error.
+With the exception of environments, R values are immutable with a copy on write semantics, so any modification of function arguments in the function’s body will trigger their duplication.
+There are two things that need to be done before recording call details.
+First, tracing must be temporally disabled.
+Next, we need to check whether the function terminated normally or threw an exception.
+A call is only recorded in the case the function did not fail.
 
-From now, when the function is called and terminates normally,
-its invocation is recorded in a trace.
+From now, when the function is called and terminates normally, its invocation is recorded in a trace.
 
 ```{r}
 filter(nums, is_odd)
 ```
 
-To see the recorded traces, we can use `copy_traces()` which returns a list
-of the traces seen so far. Internally, genthat uses a hash map, storing only
-unique traces.
+To see the recorded traces, we use `copy_traces()` which returns a list of the traces seen so far (since the last reset, _cf._ bellow).
+Internally, genthat uses a hash map, storing only unique traces (unique arguments and return value).
 
-There shall be just one trace:
+There is just one trace:
 
 ```{r}
 str(copy_traces())
@@ -148,12 +133,10 @@ A trace has 6 fields:
 - `pkg` - the name of the package the `fun` comes from (`NULL` for global definitions)
 - `args` - values of arguments
 - `globals` - values of free variables
-- `seed` - random seed
-- `retv` - return value
+- `seed` - the random seed
+- `retv` - teh return value
 
-We can see that the predicate is captured as a symbol
-in the arguments and then its actual value is stored in the list of global 
-variables. 
+We can see that the predicate is captured as a symbol in the arguments and then its actual value is stored in the list of global variables. 
 
 Recall, that the `is_odd` predicate was defined in terms of `is_even`:
 
@@ -161,13 +144,11 @@ Recall, that the `is_odd` predicate was defined in terms of `is_even`:
 body(is_odd)
 ```
 
-therefore, the trace related to the call `filter(nums, is_odd)` should also keep
-the definition of the `is_even` function. Since the `is_even` is only related to
-the `is_odd` function, not to the `filter` function, it is stored in the function
-environment.
+therefore, the trace related to the call `filter(nums, is_odd)` should also keep the definition of the `is_even` function.
+Since the `is_even` is only related to the `is_odd` function, not to the `filter` function, it is stored in the function environment.
 
-We can list all the symbols that are in the environment of the 
-`is_odd` function that is embedded in the trace.
+We can list all the symbols that are in the environment of the `is_odd` function that is embedded in the trace.
+
 ```{r}
 ls.str(environment(copy_traces()[[1]]$globals$is_odd))
 ```
@@ -175,32 +156,27 @@ ls.str(environment(copy_traces()[[1]]$globals$is_odd))
 As well the code:
 
 ```{r}
-get("is_even", environment(copy_traces()[[1]]$globals$is_odd))
+body(get("is_even", environment(copy_traces()[[1]]$globals$is_odd)))
 ```
 
-which shall be the same as in the `is_even` defined at the beginning 
-(except the extra marking attribute used by genthat).
+which shall be the same as in the `is_even` defined at the beginning.
 
 ### Test generation
 
 Now, when we have traces, we can turn them into tests.
-This is done using by `generate_test` method which returns a string vector with
-the extracted test.
+This is done using by `generate_test` method which returns a string vector with the extracted test.
 
 ```{r}
 test <- generate_test(copy_traces()[[1]])
 cat(paste(test, collapse="\n\n"))
 ```
 
-The `.ext.seed` represents the state of the random number generator before the
-call. This variable is part of what genthat defines as _external_ variables, _i.e._
-variables that are not defined in the source file, but rather stored in an 
-external file in RDS format (R binary serialization). The reason is that 
-some variables can be rather large and having them directly in a source file
+The `.ext.seed` represents the state of the random number generator before the call.
+This variable is part of what genthat defines as _external_ variables, _i.e._ variables that are not defined in the source file, but rather stored in an external file in RDS format (R binary serialization).
+The reason is that some variables can be rather large and having them directly in a source file
 would hamper its readability.
 
-The string returned from `generate_test` includes an attribute `externals` that
-is an environment contains all external variables referenced by the test.
+The string returned from `generate_test` includes an attribute `externals` that is an environment contains all external variables referenced by the test.
 
 ```{r}
 ls.str(attr(test, "externals"), all.names=TRUE)
@@ -208,10 +184,9 @@ ls.str(attr(test, "externals"), all.names=TRUE)
 
 ### Running generated test
 
-The generate tests are in the [testthat](https://github.com/r-lib/testthat) format, 
-a popular unit testing library for R. Because of the external variables, the tests
-need to be run in a correct environment. Genthat provides `generate_test_file`
-which stores generated tests and external variables in files.
+The generate tests are in the [testthat](https://github.com/r-lib/testthat) format, a popular unit testing library for R.
+Because of the external variables, the tests need to be run in a correct environment.
+Genthat provides `generate_test_file` which stores generated tests and external variables in files.
 
 ```{r}
 # save generated test in a file
@@ -219,29 +194,22 @@ output_dir <- tempfile()
 test_file <- generate_test_file(copy_traces()[[1]], output_dir)
 ```
 
-The structure is `<package-name>/<function-name>/test-<seq>.{R,ext}` where
-`seq` is just an increasing number sequence. The `.R` file contains the test code and
-the `.ext` file stores the external variables.
+The structure is `<package-name>/<function-name>/test-<seq>.{R,ext}` where `seq` is just an increasing number sequence. The `.R` file contains the test code and the `.ext` file stores the external variables.
 
-In our example, since we have no package name (the `filter` is defined in a global environment),
-the package name is `_NULL_` to emphasize this fact.
+In our example, since we have no package name (the `filter` is defined in a global environment), the package name is `_NULL_` to emphasize this fact.
 
 ```{r}
 cat(paste(system2("tree", output_dir, stdout=TRUE), collapse="\n"))
 ```
 
-The `generated_test_file` returns the file path. This can be fed into
-`test_generated_file`, which is a thin wrapper over `testthat::test_file`
-function taking care of the external variables.
+The `generated_test_file` returns the file path. This can be fed into `test_generated_file`, which is a thin wrapper over `testthat::test_file` function taking care of the external variables.
 
 ```{r}
 result <- test_generated_file(test_file)
 result
 ```
 
-There is also a `run_generated_tests` function that takes a vector of test files
-to run consecutively. It returns vector of elapsed time as well as
-any encountered errors. This is useful for batch processing.
+There is also a `run_generated_tests` function that takes a vector of test files to run consecutively. It returns vector of elapsed time as well as any encountered errors. This is useful for batch processing.
 
 ```{r}
 run_generated_test(test_file)
@@ -262,18 +230,13 @@ str(copy_traces())
 
 ```{r}
 reset_function(filter)
-```
-
-
-```{r}
 body(filter)
 ```
 
 ## Extracting tests from a package
 
-Genthat is usually used in a batch processing, extracting tests for a whole
-package. To show how this work, we will use [Rvmmin](https://cran.r-project.org/web/packages/Rvmmin/index.html),
-an existing R package for variable metric nonlinear function minimization with bounds constraints.
+Genthat is usually used in a batch processing, extracting tests for a whole package.
+To show how this work, we will use [Rvmmin](https://cran.r-project.org/web/packages/Rvmmin/index.html), an existing R package for variable metric nonlinear function minimization with bounds constraints.
 It has over 1000 lines of code and has been on CRAN for a couple of years.
 The package source is in `packages/Rvmmin`:
 
@@ -281,15 +244,16 @@ The package source is in `packages/Rvmmin`:
 cat(paste(system2("tree", "packages/Rvmmin", stdout=TRUE), collapse="\n"))
 ```
 
-We can see that the package defines a test (`tests/BTbad.R`), it has some documentation (`man/*.Rd`)
-and a vignette (`vignettes/Rvmmin.Rmd`).
+We can see that the package defines a test (`tests/BTbad.R`), it has some documentation (`man/*.Rd`) and a vignette (`vignettes/Rvmmin.Rmd`).
 
 Checking the test code coverage:
 ```{r}
 library(covr)
-package_coverage("packages/Rvmmin", type="tests")
+tests_coverage <- package_coverage("packages/Rvmmin", type="tests")
+tests_coverage_value <- compute_coverage(tally_coverage(tests_coverage))
+tests_coverage_value
 ```
-we see that the test does not cover much.
+From the coverage of `r fmt(tests_coverage_value)`% we see that the tests does not cover much in this package.
 
 Since there seems to be some runnable code (examples in documentation and vignettes), we can try to improve this using genthat.
 First, we define where genthat finds the source code of packages:
@@ -298,19 +262,43 @@ First, we define where genthat finds the source code of packages:
 options(genthat.source_paths="packages")
 ```
 
-Running the test extraction is done using `gen_from_package` which basically
-orchestrates the different functions we have showed in the previous section.
+Running the test extraction is done using `gen_from_package` which basically orchestrates the different functions we have showed in the previous section.
 
-```{r}
+```{r tracing Rvmmin package}
 result <- 
   gen_from_package("Rvmmin", types="all", action="generate", prune_tests=TRUE, output_dir="tmp")
 ```
 
+- `types` describes which code to to run (`vignettes`, `tests`, `examples`)
+- `action` - `generate` - generated testthat unit tests, `export` - stores raw traces
+- `prune_test` - discards the tests that do not increase code coverage
+- `output_dir` - where to generate the tests
+
 It generated `r nrow(result)` tests, with the code coverage of `r fmt(max(result$coverage))`%.
 
+Example 
 ```{r}
 result
 ```
+
+- `file` - where the code generating this test originates
+- `output` - path to the test
+- `elapsed` - test running time
+- `coverage` - test coverage computed as a sum of previous rows plus this test
+
+The reported test coverage is only for the tests generated by genthat.
+Since, genthat also runs package tests (often they are far from unit tests), it should also capture all their calls.
+However, in some cases genthat cannot properly trace a call and so it can be useful to include also the original tests in the final test suite.
+The `compute_coverage` function can compute test coverage from multiple source.
+To combine the original test coverage as well as the coverage from genthat tests, we need the raw coverage indicating which files, functions and line numbers we hit during an evaluation.
+This is included in the `raw_coverage` attribute in the result from `gen_from_package`.
+
+```{r}
+coverage <- compute_coverage(tally_coverage(tests_coverage), attr(result, "raw_coverage"))
+coverage
+```
+
+In this case, the code coverage is the same meaning that genthat managed to capture all the calls from the package's tests. 
 
 The tests were generated in `tmp/Rvmmin`:
 
@@ -318,8 +306,9 @@ The tests were generated in `tmp/Rvmmin`:
 cat(paste(system2("tree", "tmp/Rvmmin", stdout=TRUE), collapse="\n"))
 ```
 
-The `result` return value also contains some attributes with additional information.
-The `stats` provides overview of the test extraction:
+Next to `raw_coverage`, the `result` return value also contains some additional attributes:
+
+`stats` provides overview of the test extraction:
 
 ```{r}
 attr(result, "stats")
@@ -334,13 +323,14 @@ where
 - `coverage` is the resulting coverage of R code in %
 - `elapsed` is the time it took to run the generated tests
 
-The `errros` provides details about the failures in tracing, tests generation and test running:
+The `errors` provides details about the failures in tracing, tests generation and test running:
 
 ```{r}
 head(attr(result, "errors"))
 ```
 
-This is useful for debugging.
+which is is useful for debugging.
+This was the source for writing Table 3 in the paper.
 
 ## Extracting tests from reverse dependencies
 
@@ -361,7 +351,7 @@ We use only direct reverse dependencies. While we can use also indirect ones, it
 The call to `gen_from_package` is almost the same as with only the package code with the
 difference that we specify what packages to run:
 
-```{r}
+```{r tracing reverse dependencies}
 result_rdeps <- 
   gen_from_package(
     pkgs_to_trace="Rvmmin",
@@ -372,11 +362,12 @@ result_rdeps <-
 Looking at
 
 ```{r}
+coverage_rdeps <- compute_coverage(attr(result_rdeps, "raw_coverage"))
 attr(result_rdeps, "stats")
 ```
 
 we can see that the running the reverse dependencies add a `r nrow(result_rdeps) - nrow(result)` more tests and 
-increased the coverage from `r fmt(max(result$coverage))`% to `r fmt(max(result_rdeps$coverage))`%.
+increased the coverage from `r fmt(max(coverage))`% to `r fmt(coverage_rdeps)`%.
 
 ## Appendices
 
@@ -441,7 +432,7 @@ In Figure 2, in Section 3, there is the following code:
 Code from package `L`:
 
 ```{r}
-f <-function(x, y, l=c(substitute(a), substitute(b))) {
+f <-function(x, y, l=c(deparse(substitute(x)), deparse(substitute(y)))) {
   df <- data.frame(dx=x, dy=y)
   attr(df,"label") <- l
   df

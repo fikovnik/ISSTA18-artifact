@@ -23,7 +23,7 @@ PAPER_NPACKAGES <- 1547
 This is the artifact for the paper __Tests from Traces: Automated Unit Test Generation for R__ published at ISSTA 2018.
 The aim is to:
 
-1. show how the Genthat tool introduced in the paper works and can be used for extracting code from R packages, and
+1. show how the genthat tool introduced in the paper works and can be used for extracting code from R packages, and
 2. reproduce the experiment used to evaluate it.
 
 Concretely, we rerun the all the code snippets shown in Section 3 of the paper and the evaluation from Section 4.
