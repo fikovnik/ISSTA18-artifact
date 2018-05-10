@@ -278,7 +278,7 @@ div.tocify {
 <p>The artifact is provided as a docker image <code>prlprg/issta18-genthat</code>. The image contains R 3.4 with a web version of Rstudio and a set of sample packages.</p></li>
 <li><p>Run the docker image:</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">./run.sh</span></code></pre></div>
-<p>from the cloned repository. This shall download the already prebuilt docker image from <a href="https://hub.docker.com/r/fikovnik/issta18-artifact/">docker hub</a>. If you prefer to build your own, please follow the instructions at the end of this document. If you ran the docker image manually, please make sure its name is <code>issta18-genthat</code>.</p></li>
+<p>from the cloned repository. This runs the docker container in foreground making it easy to close by just issuing CTRL+C or simply closing the terminal window. It will download the already prebuilt docker image from <a href="https://hub.docker.com/r/fikovnik/issta18-artifact/">docker hub</a>. If you prefer to build your own, please follow the instructions at the end of this document. If you ran the docker image manually, please make sure its name is <code>issta18-genthat</code>. The rest of the commands shall be done in new terminal window.</p></li>
 </ol>
 <div id="genthat-overview" class="section level3">
 <h3>Genthat Overview</h3>
@@ -295,12 +295,12 @@ div.tocify {
 <p>The Section 4 presents an experiment that runs genthat on 1547 <a href="https://cran.r-project.org/">CRAN</a> packages. In this artifact, we present the same one, with the difference that only 857 packages are selected. The reason is that tracing, as indicated in the paper, takes a long time to run. These packages represent all the original ones for which tracing took less than 2 minutes. Running the original package set took <strong>1d 18h</strong> on two virtual nodes with 60GB RAM and 16 CPU at 2.2GHz. On an average laptop or desktop, it might take much more.</p>
 <p>This experiment is composed in a way that gives some flexibility as how much time one wants to devote to the reproduction. We have created the following package files (package name per line) with different sizes:</p>
 <ul>
-<li><code>packages-100.txt</code> ~ 30min</li>
-<li><code>packages-200.txt</code> ~ 1h</li>
-<li><code>packages-400.txt</code> ~ 2h</li>
-<li><code>packages-all.txt</code> ~ 4h</li>
+<li><code>packages-100.txt</code> ~ 100 packages, completes in ~30min</li>
+<li><code>packages-200.txt</code> ~ 200 packages, completes in ~45min</li>
+<li><code>packages-400.txt</code> ~ 400 packages, completes in ~75min</li>
+<li><code>packages-all.txt</code> ~ all packages, completes in ~100min</li>
 </ul>
-<p>which simply restricts the selection of packages to consider in the experiment. Each shall run roughly twice the time its predecessor (measured on i7 laptop with 16GB of RAM). The larger the set is the closer to the paper value one gets. The experiment can also be run iteratively, each time adding more packages. It does not rerun the package for which it has produced data.</p>
+<p>which simply restrict the selection of packages. The time needed was measured on i7 laptop with 16GB of RAM. The experiment can also be run iteratively, each time adding more packages. It does not rerun the package for which it has produced data. This is why you need to remove the <code>experiment</code> directory at the very beginning.</p>
 <p>By default the experiment is set to run all packages. This can be changed this by symlinking the <code>packages.txt</code> to a different target set.</p>
 <p>It is possible to try genthat on any package. Simply just add your favorite R package(s) into <code>packages.txt</code> file. Just make sure that they are installed like (basically including their runnable code):</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">&quot;MyFavoritePackage&quot;</span>, <span class="dt">destdir=</span><span class="st">'/CRAN'</span>, <span class="dt">INSTALL_opts=</span><span class="kw">c</span>(<span class="st">'--example'</span>, <span class="st">'--install-tests'</span>, <span class="st">'--with-keep.source'</span>, <span class="st">'--no-multiarch'</span>), <span class="dt">dependencies=</span><span class="ot">TRUE</span>)</code></pre></div>

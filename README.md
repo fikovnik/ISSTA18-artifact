@@ -54,9 +54,11 @@ The image contains R 3.4 with a web version of Rstudio and a set of sample packa
 ./run.sh
 ```
 from the cloned repository.
-This shall download the already prebuilt docker image from [docker hub](https://hub.docker.com/r/fikovnik/issta18-artifact/).
+This runs the docker container in foreground making it easy to close by just issuing CTRL+C or simply closing the terminal window.
+It will download the already prebuilt docker image from [docker hub](https://hub.docker.com/r/fikovnik/issta18-artifact/).
 If you prefer to build your own, please follow the instructions at the end of this document.
 If you ran the docker image manually, please make sure its name is `issta18-genthat`.
+The rest of the commands shall be done in new terminal window.
 
 ### Genthat Overview
 
@@ -88,16 +90,16 @@ On an average laptop or desktop, it might take much more.
 This experiment is composed in a way that gives some flexibility as how much time one wants to devote to the reproduction.
 We have created the following package files (package name per line) with different sizes:
 
-- `packages-100.txt` ~ 30min
-- `packages-200.txt` ~ 1h
-- `packages-400.txt` ~ 2h
-- `packages-all.txt` ~ 4h
+- `packages-100.txt` ~ 100 packages, completes in ~30min
+- `packages-200.txt` ~ 200 packages, completes in ~45min
+- `packages-400.txt` ~ 400 packages, completes in ~75min
+- `packages-all.txt` ~ all packages, completes in ~100min
 
-which simply restricts the selection of packages to consider in the experiment.
-Each shall run roughly twice the time its predecessor (measured on i7 laptop with 16GB of RAM).
-The larger the set is the closer to the paper value one gets.
+which simply restrict the selection of packages.
+The time needed was measured on i7 laptop with 16GB of RAM.
 The experiment can also be run iteratively, each time adding more packages.
 It does not rerun the package for which it has produced data.
+This is why you need to remove the `experiment` directory at the very beginning.
 
 By default the experiment is set to run all packages.
 This can be changed this by symlinking the `packages.txt` to a different target set.

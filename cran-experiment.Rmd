@@ -8,11 +8,10 @@ output:
     toc_depth: 2
     toc_float: true
     highlight: tango
-editor_options:
-  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
+library(genthat)
 library(dplyr)
 library(tidyr)
 library(purrr)
@@ -32,36 +31,42 @@ output_dir <- "experiment"
 
 ```{r aux functions, include=FALSE}
 load_coverage <- function(path) {
-  coverage <- readRDS(path)
+  package <- basename(path)
+  tests_coverage_file <- file.path(path, "coverage.RDS")
+  tests_file <- file.path(path, "tests.RDS")
   
-  if (is.data.frame(coverage)) {
-    # only keep coverage of R file - genthat does not support C/C++ coverage
-    coverage_df <- filter(coverage, grepl("(.R|.r)$", filename))
-    # compute the percentage
-    tests_coverage <- (sum(coverage_df$value > 0) / length(coverage_df$value)) * 100
-    data_frame(tests_coverage, tests_coverage_time=as.numeric(attr(coverage, "time"), unit="secs"))
-  } else {
-    data_frame(tests_coverage=NA, tests_coverage_time=NA)
-  }
-}
-
-load_genthat_stats <- function(path) {
-  tests <- readRDS(path)
-  stats <- attr(tests, "stats")
+  tests_coverage_df <- if (file.exists(tests_coverage_file)) readRDS(tests_coverage_file) else NA
+  tests_df <- if (file.exists(tests_file)) readRDS(tests_file) else NA
   
-  if (!is.null(stats)) {
-    data_frame(
-      all=stats[1], 
-      generated=stats[2], 
-      ran=stats[3], 
-      kept=stats[4], 
-      coverage=stats[5], 
-      genthat_tests_time=stats[6], 
-      trace_time=as.numeric(attr(tests, "time"), unit="secs")
-    )
-  } else {
-    data_frame(all=NA, generated=NA, ran=NA, kept=NA, coverage=NA, genthat_tests_time=NA, trace_time=NA)
+  stats <- rep(NA, 6)
+  trace_time <- NA
+  tests_coverage <- NA
+  tests_coverage_time <- NA
+  
+  if (is.data.frame(tests_coverage_df) && is.data.frame(tests_df)) {
+    stats <- attr(tests_df, "stats")
+    genthat_coverage_df <- attr(tests_df, "raw_coverage")
+    coverage <- compute_coverage(tests_coverage_df, genthat_coverage_df)
+    trace_time <- as.numeric(attr(tests_df, "time"), unit="secs")
+  } 
+  
+  if (is.data.frame(tests_coverage_df)) {
+    tests_coverage <- compute_coverage(tests_coverage_df)
+    tests_coverage_time <- as.numeric(attr(tests_coverage_df, "time"), unit="secs")
   }
+  
+  data_frame(
+    package,
+    all=stats[1], 
+    generated=stats[2], 
+    ran=stats[3], 
+    kept=stats[4], 
+    coverage, 
+    genthat_tests_time=stats[6], 
+    trace_time,
+    tests_coverage, 
+    tests_coverage_time
+  )
 }
 
 fmt <- function(x) format(round(x, 2), big.mark=",")
@@ -77,39 +82,27 @@ PAPER_ACCURACY <- 0.8
 ```
 
 This notebook processes the results from the CRAN experiment and reproduces the data from Section 4.
+We present the results in comparison with the data included in the paper.
+The numbers differs based on what packages were run.
+The main idea is to demonstrate the usability of the tool.
+It shall be able to increase code coverage given that there is some runnable code in the packages.
+
+The prerendered results in the repository shows the values for running all the packages (`packages-all.txt`).
 
 ## Loading the results
 
 First we load the data from packages that ran.
 
+We need to find which packages succeeded:
 ```{r}
-packages_df <- data_frame(
-  package_path=list.dirs(output_dir, full.names=TRUE, recursive=FALSE),
-  package=basename(package_path),
-  coverage_file=file.path(package_path, "coverage.RDS"),
-  tests_file=file.path(package_path, "tests.RDS")
-) %>% 
-  select(-package_path) %>%
-  filter(file.exists(coverage_file), file.exists(tests_file))
-```
-
-```{r test coverage}
-packages_tests_df <- 
-  rowwise(packages_df) %>%
-  do(load_coverage(.$coverage_file))
-```
-
-```{r genthat test extraction}
-packages_gt_df <- 
-  rowwise(packages_df) %>%
-  do(load_genthat_stats(.$tests_file))
-```
-
-```{r}
-packages_all_df <-
-  select(packages_df, package) %>%
-  bind_cols(packages_tests_df) %>%
-  bind_cols(packages_gt_df)
+packages_all_df <- 
+  data_frame(package_path=list.dirs(output_dir, full.names=TRUE, recursive=FALSE)) %>% 
+  filter(
+    file.exists(file.path(package_path, "coverage.RDS")), 
+    file.exists(file.path(package_path, "tests.RDS"))
+  ) %>%
+  rowwise() %>%
+  do(load_coverage(.$package_path))
 ```
 
 Next, we load the code size.
@@ -152,15 +145,27 @@ With genthat this is increased to `r my_avg(packages_all_df$coverage/100)`.
 In terms of source lines of code (as reported in both the paper abstract and paper introduction), **genthat improved code coverage from the original rather low value of `r fmt(test_coverage_sloc)` lines to `r fmt(coverage_sloc)` lines**.
 This is an increase of `r fmt(coverage_sloc/test_coverage_sloc*100)`%.
 In the paper we reported `r fmt(PAPER_COVERAGE_SLOC/PAPER_TEST_COVERAGE_SLOC*100)`%.
+The following figure compares the test code coverage with genthat and without:
 
-The major results in the paper are in Table 1, Table 2 and Figure 4 which are shown bellow.
+```{r}
+packages_all_df %>%
+  mutate(Genthat=coverage/100, Default=tests_coverage/100) %>%
+  gather(key="x", value="y", Genthat, Default) %>%
+  ggplot(aes(factor(x, levels=c("Genthat", "Default")), y, fill=x)) + 
+    geom_boxplot(alpha=.4) +
+    theme_minimal() +
+    scale_y_continuous(labels=scales::percent_format()) +
+    guides(fill=FALSE) +
+    labs(x="Tests", y="Code coverage")
+```
 
+The section 4 presents the results in 3 tables and two figures.
+The major results are in Table 1, Table 2 and Figure 4 which are shown bellow.
 Table 3 describes what are the cases of lost accuracy.
 A part of the table requires manual inspection of the failures (how to get errors has been explained in the _overview_ notebook).
-Therefore, we reports only the overall accuracy `r fmt(accuracy*100)`% which should be similar to what we reported in the paper `r fmt(PAPER_ACCURACY*100)`%.
+Therefore, we reports only the overall accuracy `r fmt(accuracy*100)`% which should be similar to `r fmt(PAPER_ACCURACY*100)`% reported in the paper (again, depends which set of packages was ran).
 This of course depends on the package selection, yet in a reasonable number of packages the numbers shall be close.
-
-Finally, Figure 5 with reverse dependencies is skipped because:
+Figure 5 with reverse dependencies is skipped because:
 
 1. rerunning reverse dependencies for these packages will be highly time consuming,
 2. we have already shown in the _overview_ how it is done on a single package `Rvmmin`,
@@ -188,21 +193,39 @@ Since they are rather small (tracing time is under 2 minutes), there are not man
 ### Figure 4
 
 ```{r}
-select(packages_all_df, package, coverage, tests_coverage) %>%
-  mutate(Default=tests_coverage/100, Genthat=coverage/100) %>%
-  gather(key="key", value="value", Default, Genthat) %>%
-  ggplot(aes(x=value, fill=factor(key, levels=c("Genthat", "Default")))) + 
-    geom_histogram(alpha=.4, bins=100, colour="grey") + 
-    scale_x_continuous(labels=scales::percent_format()) +
-    theme_minimal() +
-    theme(legend.position=c(.9,.75)) +
-    labs(x="Code coverage", y="Number of packages", fill="Tests")
-    
+figure4 <- function(df) {
+  select(df, package, coverage, tests_coverage) %>%
+    mutate(Default=tests_coverage/100, Genthat=coverage/100) %>%
+    gather(key="key", value="value", Default, Genthat) %>%
+    ggplot(aes(x=value, fill=factor(key, levels=c("Genthat", "Default")))) + 
+      geom_histogram(alpha=.4, bins=100, colour="grey") + 
+      scale_x_continuous(labels=scales::percent_format()) +
+      theme_minimal() +
+      theme(legend.position=c(.8,.75)) +
+      labs(x="Code coverage", y="Number of packages", fill="Tests")
+}
+```
+
+```{r}
+packages_all_df %>%
+  filter(tests_coverage > 0) %>%
+  figure4() %>%
+  print()
 ```
 
 Comparing with the Figure in the paper, one can see a similar shape.
-In this case however, we are running much smaller packages that have less runnable code, which is why there are many packages with close to or 0% coverage with and without genthat.
-Yet, across the whole spectrum, genthat succeeded in increasing the code coverage.
+In this case we removed the packages that have 0 test coverage since they will dominate this graph (_cf._ bellow).
+The reason is that are run smaller packages (tracing time under 2 minutes).
+In general, these packages tend to have less code and less tests.
+Similarly to what is in the paper, genthat succeeded to increase the code coverage.
+
+For the sake of completeness, here is the same figure showing all the data:
+```{r}
+packages_all_df %>%
+  figure4() %>%
+  print()
+```
+
 
 ### Table 2
 
