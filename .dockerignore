@@ -2,3 +2,5 @@ experiment
 kitematic
 packages
 tmp
+.config
+ overview_cache

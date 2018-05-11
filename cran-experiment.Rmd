@@ -20,12 +20,6 @@ library(stringr)
 library(ggplot2)
 
 knitr::opts_chunk$set(echo = TRUE, comment=NA)
-
-# genthat options
-options(genthat.source_paths="/CRAN")
-options(genthat.debug=FALSE)
-options(genthat.max_trace_size=getOption("genthat.max_trace_size", 512*1024))
-
 output_dir <- "experiment"
 ```
 
@@ -135,7 +129,7 @@ accuracy <- sum(packages_all_df$ran)/sum(packages_all_df$all)
 
 Together, this experiment ran `r length(readLines("packages.txt"))` packages (the number of lines in `packages.txt`) out of which `r nrow(packages_all_df)` packages completed.
 This is `r fmt(nrow(packages_all_df)/PAPER_NPACKAGES*100)`% of the packages reported in the the paper.
-These packages comprises of `r fmt(sum(sloc$code))` lines of code (excluding white space and comments), which is `r fmt(sum(sloc$code)/PAPER_SLOC*100)`% of the original experiment.
+These packages comprise of `r fmt(sum(sloc$code))` lines of code (excluding white space and comments), which is `r fmt(sum(sloc$code)/PAPER_SLOC*100)`% of the original experiment.
 We selected the packages which had the original tracing time less than 2 minutes to keep the artifact time manageable.
 
 ### Summary
@@ -186,8 +180,8 @@ table1 <- tribble(
 table1
 ```
 
-Here we should see a similar accuracy results.
-The number of unique traces shall help to understand the the size of the packages.
+Here we should see similar accuracy results.
+The number of unique traces shall help to understand the size of the packages.
 Since they are rather small (tracing time is under 2 minutes), there are not many calls from which to extract tests.
 
 ### Figure 4
@@ -215,7 +209,7 @@ packages_all_df %>%
 
 Comparing with the Figure in the paper, one can see a similar shape.
 In this case we removed the packages that have 0 test coverage since they will dominate this graph (_cf._ bellow).
-The reason is that are run smaller packages (tracing time under 2 minutes).
+The reason is that we run smaller packages (tracing time under 2 minutes).
 In general, these packages tend to have less code and less tests.
 Similarly to what is in the paper, genthat succeeded to increase the code coverage.
 
@@ -226,6 +220,8 @@ packages_all_df %>%
   print()
 ```
 
+Here we can see that most of the packages do not have any tests.
+With genthat, only very few packages does not have any code coverage.
 
 ### Table 2
 

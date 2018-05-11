@@ -3,6 +3,7 @@
 experiment/**/*
 !experiment/**/coverage.RDS
 !experiment/**/tests.RDS
-experiment.log
+experiment-*.log
 tmp
-
+.config
+overview_cache

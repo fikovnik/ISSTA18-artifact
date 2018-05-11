@@ -34,7 +34,7 @@ fmt <- function(x) format(round(x, 2), big.mark=",")
 
 In this R notebook, we provide an overview of the genthat package.
 We start with its low-level API to show how a test is extracted from a function call using examples based on the code shown in sections 2 and 3 in the paper.
-Next, we show how the test extraction process can be automated and run on a a whole package including its reverse dependencies.
+Next, we show how the test extraction process can be automated and run on a whole package including its reverse dependencies.
 
 ## Basics
 
@@ -81,8 +81,8 @@ library(genthat)
 ### Function tracing
 
 Genthat extracts test from _traces_, which are recorded function invocations.
-To capture invocations of a function, we need to decorate it. 
-This is done by the `decorate_function` that modifies the original function body to additionally records its arguments, return values and the current state of the random number generator.
+To capture invocations of a function, we first need to decorate it. 
+This is done by the `decorate_function` that modifies the original function body to additionally records its arguments, return values, and the current state of the random number generator.
 Before calling the function we can double check the body of the `filter` function defined above:
 
 ```{r}
@@ -136,24 +136,25 @@ A trace has 6 fields:
 - `seed` - the random seed
 - `retv` - teh return value
 
-We can see that the predicate is captured as a symbol in the arguments and then its actual value is stored in the list of global variables. 
-
-Recall, that the `is_odd` predicate was defined in terms of `is_even`:
+We can see that the `is_odd` predicate is captured as a symbol in the arguments and then its actual value is stored in the list of global variables.
+In the end we want the call to be fully reproducible in a standalone test that can run in a clean R session.
+For this, genthat has to capture all the free variables in a call expression.
+In this case, it captured the `is_odd` predicate, but recall, that `is_odd` was defined in terms of `is_even`:
 
 ```{r}
 body(is_odd)
 ```
 
-therefore, the trace related to the call `filter(nums, is_odd)` should also keep the definition of the `is_even` function.
+Therefore, the trace related to the call `filter(nums, is_odd)` should also keep the definition of the `is_even` function.
 Since the `is_even` is only related to the `is_odd` function, not to the `filter` function, it is stored in the function environment.
 
-We can list all the symbols that are in the environment of the `is_odd` function that is embedded in the trace.
+We can list all the symbols that are in the environment of the `is_odd` function that is embedded in the trace:
 
 ```{r}
 ls.str(environment(copy_traces()[[1]]$globals$is_odd))
 ```
 
-As well the code:
+as well the code:
 
 ```{r}
 body(get("is_even", environment(copy_traces()[[1]]$globals$is_odd)))
@@ -164,7 +165,7 @@ which shall be the same as in the `is_even` defined at the beginning.
 ### Test generation
 
 Now, when we have traces, we can turn them into tests.
-This is done using by `generate_test` method which returns a string vector with the extracted test.
+This is done using by `generate_test` method that returns a string vector with the extracted test.
 
 ```{r}
 test <- generate_test(copy_traces()[[1]])
@@ -175,6 +176,11 @@ The `.ext.seed` represents the state of the random number generator before the c
 This variable is part of what genthat defines as _external_ variables, _i.e._ variables that are not defined in the source file, but rather stored in an external file in RDS format (R binary serialization).
 The reason is that some variables can be rather large and having them directly in a source file
 would hamper its readability.
+
+The rest of the test is straight forward.
+It defines all the free variables from the call expression as well as the call to `expect_equal` asserting the actual and expected value.
+
+#### External values
 
 The string returned from `generate_test` includes an attribute `externals` that is an environment contains all external variables referenced by the test.
 
@@ -202,7 +208,7 @@ In our example, since we have no package name (the `filter` is defined in a glob
 cat(paste(system2("tree", output_dir, stdout=TRUE), collapse="\n"))
 ```
 
-The `generated_test_file` returns the file path. This can be fed into `test_generated_file`, which is a thin wrapper over `testthat::test_file` function taking care of the external variables.
+The `generated_test_file` returns the file path. This can be fed into `test_generated_file`, which is a thin wrapper over `testthat::test_file` function additionally taking care of the external variables.
 
 ```{r}
 result <- test_generated_file(test_file)
@@ -220,14 +226,12 @@ run_generated_test(test_file)
 Genthat provides two functions to clean up:
 
 - `reset_traces` to remove all recorded traces:
-
 ```{r}
 reset_traces()
 str(copy_traces())
 ```
 
 - `reset_function` to restore the original function body:
-
 ```{r}
 reset_function(filter)
 body(filter)
@@ -235,7 +239,7 @@ body(filter)
 
 ## Extracting tests from a package
 
-Genthat is usually used in a batch processing, extracting tests for a whole package.
+Genthat is usually used in a batch, extracting tests for a whole package.
 To show how this work, we will use [Rvmmin](https://cran.r-project.org/web/packages/Rvmmin/index.html), an existing R package for variable metric nonlinear function minimization with bounds constraints.
 It has over 1000 lines of code and has been on CRAN for a couple of years.
 The package source is in `packages/Rvmmin`:
@@ -246,19 +250,19 @@ cat(paste(system2("tree", "packages/Rvmmin", stdout=TRUE), collapse="\n"))
 
 We can see that the package defines a test (`tests/BTbad.R`), it has some documentation (`man/*.Rd`) and a vignette (`vignettes/Rvmmin.Rmd`).
 
-Checking the test code coverage:
+First, we checking the test code coverage of the package using [covr](https://cran.r-project.org/web/packages/covr/):
 ```{r}
 library(covr)
 tests_coverage <- package_coverage("packages/Rvmmin", type="tests")
 tests_coverage_value <- compute_coverage(tally_coverage(tests_coverage))
 tests_coverage_value
 ```
-From the coverage of `r fmt(tests_coverage_value)`% we see that the tests does not cover much in this package.
+From the coverage of `r fmt(tests_coverage_value)`% we see that the tests do not cover much in this package.
 
 Since there seems to be some runnable code (examples in documentation and vignettes), we can try to improve this using genthat.
 First, we define where genthat finds the source code of packages:
 
-```{r}
+```{r set source code location}
 options(genthat.source_paths="packages")
 ```
 
@@ -266,7 +270,13 @@ Running the test extraction is done using `gen_from_package` which basically orc
 
 ```{r tracing Rvmmin package}
 result <- 
-  gen_from_package("Rvmmin", types="all", action="generate", prune_tests=TRUE, output_dir="tmp")
+  gen_from_package(
+    "Rvmmin", 
+    types="all", 
+    action="generate", 
+    prune_tests=TRUE, 
+    output_dir="tmp"
+  )
 ```
 
 - `types` describes which code to to run (`vignettes`, `tests`, `examples`)
@@ -284,12 +294,12 @@ result
 - `file` - where the code generating this test originates
 - `output` - path to the test
 - `elapsed` - test running time
-- `coverage` - test coverage computed as a sum of previous rows plus this test
+- `coverage` - test coverage computed as a sum of previous tests plus this test
 
 The reported test coverage is only for the tests generated by genthat.
-Since, genthat also runs package tests (often they are far from unit tests), it should also capture all their calls.
-However, in some cases genthat cannot properly trace a call and so it can be useful to include also the original tests in the final test suite.
-The `compute_coverage` function can compute test coverage from multiple source.
+Since, genthat also runs package test code, it should also capture all their calls.
+However, in some cases genthat cannot properly trace a call and so it can be useful to include also the original tests in the final suite.
+The `compute_coverage` function can compute test coverage from multiple sources.
 To combine the original test coverage as well as the coverage from genthat tests, we need the raw coverage indicating which files, functions and line numbers we hit during an evaluation.
 This is included in the `raw_coverage` attribute in the result from `gen_from_package`.
 
@@ -298,7 +308,8 @@ coverage <- compute_coverage(tally_coverage(tests_coverage), attr(result, "raw_c
 coverage
 ```
 
-In this case, the code coverage is the same meaning that genthat managed to capture all the calls from the package's tests. 
+In this case, the code coverage is the same meaning that genthat managed to capture all the calls from the package's tests.
+This is however not always the case as we reproted in the paper in Table 1 and Table 3.
 
 The tests were generated in `tmp/Rvmmin`:
 
@@ -420,7 +431,7 @@ ls.str(environment(copy_traces()[[1]]$globals$gt))
 ### Example from Section 3
 
 Before we continue with one more example, we just remove all the traces, 
-to have a fresh start:
+to have a fresh tracing environment:
 
 ```{r}
 reset_traces()

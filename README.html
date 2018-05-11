@@ -259,8 +259,7 @@ div.tocify {
 <li>Genthat Overview</li>
 <li>CRAN Experiment</li>
 </ul>
-<p>The first part corresponds to the Section 3 of the paper where we introduce the tool. The second part reproduces the experiment that we used to evaluate the tool in Section 4 and reproduce Table 1,2 and Figure 4.</p>
-<p>Both parts require the docker image to be run.</p>
+<p>The first part corresponds to the Section 3 of the paper where we introduce the tool. The second part reproduces the experiment that we used to evaluate the tool in Section 4 and reproduce Table 1, 2 and Figure 4.</p>
 </div>
 <div id="prerequisites" class="section level2">
 <h2>Prerequisites</h2>
@@ -275,47 +274,51 @@ div.tocify {
 <ol style="list-style-type: decimal">
 <li><p>Clone the repository <a href="https://github.com/fikovnik/ISSTA18-artifact">fikovnik/ISSTA18-artifact</a>:</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="fu">git</span> clone https://github.com/fikovnik/ISSTA18-artifact</code></pre></div>
-<p>The artifact is provided as a docker image <code>prlprg/issta18-genthat</code>. The image contains R 3.4 with a web version of Rstudio and a set of sample packages.</p></li>
+<p>The artifact is provided as a docker image <code>prlprg/issta18-genthat</code>. The image contains R 3.4 with a web version of Rstudio and a set of preinstalled R packages.</p></li>
 <li><p>Run the docker image:</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">./run.sh</span></code></pre></div>
 <p>from the cloned repository. This runs the docker container in foreground making it easy to close by just issuing CTRL+C or simply closing the terminal window. It will download the already prebuilt docker image from <a href="https://hub.docker.com/r/fikovnik/issta18-artifact/">docker hub</a>. If you prefer to build your own, please follow the instructions at the end of this document. If you ran the docker image manually, please make sure its name is <code>issta18-genthat</code>. The rest of the commands shall be done in new terminal window.</p></li>
 </ol>
+<p>Please note that both evaluation parts bellow require the docker image to be running.</p>
 <div id="genthat-overview" class="section level3">
 <h3>Genthat Overview</h3>
-<p>This part essentially explains how genthat works and reproduces all the examples that are in the paper. There are two ways to run it:</p>
+<p>This part essentially explains how genthat works and reproduces code examples that are presented in the paper. There are two ways to run it:</p>
 <ol style="list-style-type: decimal">
-<li><p>Interactively via Rstudio that shall be available on <a href="http://localhost:8787" class="uri">http://localhost:8787</a>. The username is <code>rstudio</code> and the password is <code>rstudio</code>. In the Rstudio application, please open the <code>overview.Rmd</code>. A <a href="https://rmarkdown.rstudio.com/">Rmd</a> or RMarkdown file is simply a document in Markdown format that embeds snippets of R code that can be ran (<em>knitted</em> - terminology used in RMarkdown) to produce an output with all the code evaluated. This can be done either running by running the snippets <em>chunk-by-chunk</em> (using the green play button next to each snippet) or by running the whole document by pressing Ctrl+Alt+K (Command+Shift+K on OSX). Resulting HTML outputs are already provided in the repository—<a href="http://localhost:8787/files/overview.html"><code>overview.html</code></a>.</p></li>
-<li><p>Simply evaluate the whole document by running from the cloned repository:</p>
+<li><p>In an Rstudio that is available on <a href="http://localhost:8787" class="uri">http://localhost:8787</a> after the docker container is started. The username and password is <code>rstudio</code>. In the Rstudio application, please open the <code>overview.Rmd</code> file. A <a href="https://rmarkdown.rstudio.com/">Rmarkdown</a> or Rmd is simply a text file in markdown-like format with snippets of R code that can be run (<em>knitted</em> - terminology used in Rmarkdown) to produce an output with the results of the code evaluation embedded within the document. Running a Rmd file can be done either interactively by running the snippets <em>chunk-by-chunk</em> (using the green play button next to each snippet) or by knitting the whole document by pressing Ctrl+Alt+K (Command+Shift+K on OSX).</p></li>
+<li><p>In a terminal by running:</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">docker</span> exec -u rstudio -w /home/rstudio issta18-genthat Rscript -e <span class="st">'rmarkdown::render(&quot;overview.Rmd&quot;)'</span></code></pre></div>
-<p>and then open the <a href="http://localhost:8787/files/overview.html"><code>overview.html</code></a>.</p></li>
+<p>from the cloned repository.</p></li>
 </ol>
+<p>In both cases the results are in <a href="http://localhost:8787/files/overview.html"><code>overview.html</code></a>. An existing <code>overview.html</code> will be overwritten.</p>
 </div>
 <div id="cran-experiment-section-4" class="section level3">
 <h3>CRAN experiment (Section 4)</h3>
-<p>The Section 4 presents an experiment that runs genthat on 1547 <a href="https://cran.r-project.org/">CRAN</a> packages. In this artifact, we present the same one, with the difference that only 857 packages are selected. The reason is that tracing, as indicated in the paper, takes a long time to run. These packages represent all the original ones for which tracing took less than 2 minutes. Running the original package set took <strong>1d 18h</strong> on two virtual nodes with 60GB RAM and 16 CPU at 2.2GHz. On an average laptop or desktop, it might take much more.</p>
+<p>The Section 4 presents an experiment that runs genthat on 1547 <a href="https://cran.r-project.org/">CRAN</a> packages. In this artifact, we present the same experiment, with the difference that only 857 packages are selected. The reason is that tracing, as indicated in the paper, takes a long time to run. Running the 1547 took <strong>1d 18h</strong> on two virtual nodes with 60GB RAM and 16 CPU at 2.2GHz. On an average laptop or desktop, it might take much more. The packages selected for this artifact represent all the original ones for which tracing (on the two nodes) took less than 2 minutes.</p>
 <p>This experiment is composed in a way that gives some flexibility as how much time one wants to devote to the reproduction. We have created the following package files (package name per line) with different sizes:</p>
 <ul>
 <li><code>packages-100.txt</code> ~ 100 packages, completes in ~30min</li>
-<li><code>packages-200.txt</code> ~ 200 packages, completes in ~45min</li>
-<li><code>packages-400.txt</code> ~ 400 packages, completes in ~75min</li>
-<li><code>packages-all.txt</code> ~ all packages, completes in ~100min</li>
+<li><code>packages-200.txt</code> ~ 200 packages, completes in ~1h 15min</li>
+<li><code>packages-400.txt</code> ~ 400 packages, completes in ~2h 30min</li>
+<li><code>packages-all.txt</code> ~ all packages, completes in ~4h 15min</li>
 </ul>
-<p>which simply restrict the selection of packages. The time needed was measured on i7 laptop with 16GB of RAM. The experiment can also be run iteratively, each time adding more packages. It does not rerun the package for which it has produced data. This is why you need to remove the <code>experiment</code> directory at the very beginning.</p>
+<p>which simply restrict the selection of packages. The time needed was measured on i7 laptop with 16GB of RAM. The experiment can also be run iteratively, each time adding more packages. It does not rerun packages that completed. This is why it is necessary to remove the <code>experiment</code> directory before an attempt to redo the experiment (<em>cf.</em> bellow).</p>
 <p>By default the experiment is set to run all packages. This can be changed this by symlinking the <code>packages.txt</code> to a different target set.</p>
-<p>It is possible to try genthat on any package. Simply just add your favorite R package(s) into <code>packages.txt</code> file. Just make sure that they are installed like (basically including their runnable code):</p>
+<div id="custom-packages" class="section level4">
+<h4>Custom packages</h4>
+<p>It is possible to try genthat on any package. Simply just add your favorite R package(s) into <code>packages.txt</code> file. Just make sure that they are installed including examples and tests:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">&quot;MyFavoritePackage&quot;</span>, <span class="dt">destdir=</span><span class="st">'/CRAN'</span>, <span class="dt">INSTALL_opts=</span><span class="kw">c</span>(<span class="st">'--example'</span>, <span class="st">'--install-tests'</span>, <span class="st">'--with-keep.source'</span>, <span class="st">'--no-multiarch'</span>), <span class="dt">dependencies=</span><span class="ot">TRUE</span>)</code></pre></div>
-<p>and the downloaded sources in <code>/CRAN/*.tar.gz</code> are extracted in <code>/CRAN</code>.</p>
+<p>and the downloaded sources in <code>/CRAN/*.tar.gz</code> are extracted in <code>/CRAN</code>. Also, please make sure that you read the note on running package code bellow.</p>
+</div>
 <div id="rerunning-the-experiment" class="section level4">
 <h4>Rerunning the experiment</h4>
-<p>The repository already contains the experiment ran (in <code>experiment</code> directory). To redo the experiment:</p>
+<p>The repository already contains a completed experiment (in <code>experiment</code> directory). To redo the experiment:</p>
 <ol style="list-style-type: decimal">
 <li><p>Make sure the docker image is running</p></li>
 <li><p>Remove the existing results</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="fu">rm</span> -fr experiment</code></pre></div></li>
-<li><p>Select the size of the experiment For example, to run a smaller set</p>
-<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="fu">rm</span> packages.txt
-<span class="fu">ln</span> -s packages-400.txt packages.txt</code></pre></div></li>
-<li><p>Run</p>
+<li><p>Select the size of the experiment, for example, to run a smaller set do:</p>
+<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="fu">ln</span> -sf packages-400.txt packages.txt</code></pre></div></li>
+<li><p>Start the experiment by running:</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">./run-experiment.sh</span></code></pre></div>
 This runs the <code>./extract-tests.R</code> it in <a href="https://www.gnu.org/software/parallel/">parallel</a> for each package found in the <code>packages.txt</code> file. The result are two RDS files:<br />
 </li>
@@ -323,19 +326,29 @@ This runs the <code>./extract-tests.R</code> it in <a href="https://www.gnu.org/
 <ul>
 <li>a <code>experiment/&lt;package_name&gt;/coverage.RDS</code> - contains test code coverage from covr<br />
 </li>
-<li>a <code>experiment/&lt;package_name&gt;/tests.RDS</code> - contains the result of running <code>gen_from_package</code><br />
+<li><p>a <code>experiment/&lt;package_name&gt;/tests.RDS</code> - contains the result of running <code>gen_from_package</code><br />
 plus all the regular genthat extracted tests.<br />
-<strong>This will take a while!</strong></li>
+<strong>This will take a while!</strong><br />
+The progress can be also followed by tailing the parallel log output in <code>experiment.log</code>:</p>
+<div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">./tail</span> -f experiment.log
+<span class="ex">Seq</span>     Host    Starttime       JobRuntime      Send    Receive Exitval Signal  Command
+<span class="ex">4</span>       :       1526026700.641       2.260      0       0       0       0       ./extract-tests.R R.matlab
+<span class="ex">1</span>       :       1526026700.621     130.101      0       0       0       0       ./extract-tests.R elliplot
+<span class="ex">...</span> ... ...
+<span class="ex">11</span>      :       1526026929.474    2695.841      0       0       -1      15      ./extract-tests.R sparklyr
+<span class="ex">12</span>      :       1526027007.903     238.169      0       0       0       0       ./extract-tests.R mlearning
+<span class="ex">...</span> ... ...</code></pre></div>
+<p>By default each package is run with 10 minutes time out (the <code>--timeout</code> argument to parallel in <code>./run-experiment.sh</code>). If you see that many packages time outed (<code>Exitval</code> is -1 and <code>Signal</code> is <code>15</code> in <code>experiment.log</code>, like the one with <code>Seq</code> 11 in the above listing), please increase the time out in the script.</p></li>
 </ul>
-<ol start="4" style="list-style-type: decimal">
-<li><p>Knit the <code>cran-experiment.Rmd</code> using provided <a href="http://localhost:8787">R studio</a> or run</p>
+<ol start="5" style="list-style-type: decimal">
+<li><p>After the experiment has ran, knit the <code>cran-experiment.Rmd</code> either in <a href="http://localhost:8787">R studio</a> or by running:</p>
 <div class="sourceCode"><pre class="sourceCode sh"><code class="sourceCode bash"><span class="ex">docker</span> exec -u rstudio -w /home/rstudio issta18-genthat Rscript -e <span class="st">'rmarkdown::render(&quot;cran-experiment.Rmd&quot;)'</span></code></pre></div>
-<p>and then open the resulting <a href="http://localhost:8787/files/cran-experiment.html"><code>cran-experiment.html</code></a></p></li>
+<p>and then open the resulting <a href="http://localhost:8787/files/cran-experiment.html"><code>cran-experiment.html</code></a>.</p></li>
 </ol>
 </div>
 <div id="a-note-on-running-package-code" class="section level4">
 <h4>A note on running package code</h4>
-<p>Genthat extracts tests by running available R code from R packages. This is not always deterministic since some of the code tries to access various web pages or have some hard-coded values. This is means that it might happen that some of the packages might fail. However, there should be a small number of them.</p>
+<p>Genthat extracts tests by running available R code from R packages. This is not always deterministic since some of the code tries to access various web pages or have some hard-coded values. This is means that it might happen that some of the packages might fail. However, there should be a small number of them. This also means that the results might be slightly different depending on which code managed to run successfully.</p>
 </div>
 </div>
 </div>
@@ -349,6 +362,7 @@ docker build \
        --build-arg REPO=https://mirrors.nic.cz/R \
        -t prlprg/issta18-genthat \
        .</code></pre>
+<p>This will take about 2h to run depending on the network speed. Please adjust the <code>REPO</code> to be a one of your local <a href="https://cran.r-project.org/mirrors.html">mirror</a>.</p>
 </div>
 <div id="toubleshooting" class="section level2">
 <h2>Toubleshooting</h2>
