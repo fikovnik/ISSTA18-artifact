@@ -16,6 +16,8 @@ output:
 
 ## Artifact description
 
+[![DOI](https://zenodo.org/badge/132507814.svg)](https://zenodo.org/badge/latestdoi/132507814)
+
 This is the artifact for the paper __Tests from Traces: Automated Unit Test Generation for R__ published at ISSTA 2018.
 The aim is to:
 
