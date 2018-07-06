@@ -27,4 +27,4 @@ RUN find /CRAN -maxdepth 1 -type d -printf "echo %p; cloc --quiet --csv %p/R | s
 RUN chown -R rstudio:rstudio /CRAN
 
 # genthat
-RUN Rscript -e 'devtools::install_github("genthat", "PRL-PRG")'
+RUN Rscript -e 'devtools::install_github("PRL-PRG/genthat@issta18")'
